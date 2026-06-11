@@ -14,12 +14,12 @@ Hệ thống bao gồm **10 container** được điều phối qua một **Ngin
 graph TD
     Client[Browser / Client App] -->|Port 8082 / 3000 / 3001| Gateway[Nginx Gateway]
     
-    subgraph Frontend Apps
+    subgraph FrontendApps ["Frontend Apps"]
         Gateway -->|/| Frontend[React Client App - Port 3000]
         Gateway -->|/admin| AdminFrontend[React Admin App - Port 3001]
     end
 
-    subgraph Business Microservices (Django REST Framework)
+    subgraph BusinessMicroservices ["Business Microservices (Django REST Framework)"]
         Gateway -->|/api/v1/users| UserService[User Service]
         Gateway -->|/api/v1/products| ProductService[Product Service]
         Gateway -->|/api/v1/cart| CartService[Cart Service]
@@ -28,7 +28,7 @@ graph TD
         Gateway -->|/api/v1/shipping| ShippingService[Shipping Service]
     end
 
-    subgraph AI Engine (FastAPI)
+    subgraph AIEngine ["AI Engine (FastAPI)"]
         Gateway -->|/api/v1/ai| AIService[AI Service]
         AIService -->|Predict Next Product| LSTM[LSTM Model PyTorch]
         AIService -->|Semantic Search| FAISS[FAISS Vector DB]
@@ -36,7 +36,7 @@ graph TD
         AIService -->|Embeddings & RAG| Gemini[Gemini 2.5 Flash API]
     end
 
-    subgraph Databases
+    subgraph DBs ["Databases"]
         UserService & CartService & OrderService & PaymentService & ShippingService --->|Relational| MySQL[(MySQL DB - Port 3307)]
         ProductService --->|Relational| PostgreSQL[(PostgreSQL DB - Port 5432)]
     end
