@@ -147,6 +147,29 @@ Hệ thống khởi tạo sẵn **22 sản phẩm** thuộc 3 ngành hàng chín
 
 ---
 
+## 📈 Quy Trình Huấn Luyện Lại & Cập Nhật Model LSTM (LSTM Model Retraining)
+
+Khi bạn thực hiện huấn luyện lại mô hình LSTM dự đoán chuỗi hành vi mua sắm (ví dụ: thông qua Jupyter Notebook `train_lstm.ipynb` trong thư mục `ai-service`), hãy thực hiện các bước sau để áp dụng tệp trọng số mới vào container đang chạy:
+
+1. **Sao chép tệp trọng số mới từ máy host vào Docker container**:
+   Do thư mục `data` của `ai-service` được đồng bộ qua Named Volume của Docker, tệp trọng số mới lưu trên local không tự động nạp vào container. Hãy chạy lệnh sau từ thư mục gốc của dự án:
+   ```bash
+   docker cp ai-service/data/lstm_weights.pth ai-service:/app/data/lstm_weights.pth
+   ```
+2. **Khởi động lại dịch vụ AI Service để nạp lại mô hình**:
+   Mô hình được tải trực tiếp vào bộ nhớ RAM khi khởi chạy ứng dụng FastAPI. Hãy khởi động lại container để cập nhật các trọng số mới vào bộ nhớ:
+   ```bash
+   docker compose restart ai-service
+   ```
+3. **Kiểm tra nhật ký khởi động để xác nhận**:
+   Theo dõi log của dịch vụ để đảm bảo mô hình mới đã nạp thành công:
+   ```bash
+   docker compose logs -f ai-service
+   ```
+   Nếu thành công, bạn sẽ thấy thông báo: `Loaded LSTM model weights successfully.`
+
+---
+
 ## 🛠️ Quản Trị Hệ Thống & Khắc Phục Sự Cố (Troubleshooting)
 
 ### 1. Xem nhật ký hoạt động (Logs)
