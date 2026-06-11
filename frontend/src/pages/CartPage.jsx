@@ -57,7 +57,7 @@ function CartPage({
 
   return (
     <div className="flex-grow flex flex-col gap-6 animate-fade-in">
-      <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-text-secondary bg-clip-text text-transparent">
+      <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent">
         Giỏ hàng của bạn
       </h2>
       {cartDetails.length === 0 ? (
@@ -74,7 +74,7 @@ function CartPage({
           <div className="xl:col-span-8 flex flex-col gap-4">
             {cartDetails.map(item => (
               <div key={item.id} className="glass p-4 rounded-2xl flex items-center justify-between gap-4">
-                <div className="h-16 w-16 bg-black/40 border border-white/5 rounded-xl flex items-center justify-center text-2xl overflow-hidden shrink-0">
+                <div className="h-16 w-16 bg-slate-100 border border-slate-200/60 rounded-xl flex items-center justify-center text-2xl overflow-hidden shrink-0">
                   {item.product?.image ? (
                     <img src={resolveImageUrl(item.product.image)} alt="" className="h-full w-full object-cover" />
                   ) : (
@@ -83,8 +83,8 @@ function CartPage({
                 </div>
                 
                 <div className="flex-grow min-w-0">
-                  <h4 className="font-semibold text-white text-sm line-clamp-1">{item.product?.name}</h4>
-                  <p className="text-xs text-emerald-400 font-semibold mt-0.5">{formatPrice(item.product?.price || 0)}</p>
+                  <h4 className="font-semibold text-text-primary text-sm line-clamp-1">{item.product?.name}</h4>
+                  <p className="text-xs text-emerald-600 font-semibold mt-0.5">{formatPrice(item.product?.price || 0)}</p>
                 </div>
 
                 <div className="flex items-center gap-2.5">
@@ -105,7 +105,7 @@ function CartPage({
 
                 <button 
                   onClick={() => onRemoveCartItem(item.id)}
-                  className="btn btn-secondary p-2 text-red-400 hover:text-red-300"
+                  className="btn btn-secondary p-2 text-red-600 hover:text-red-700"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -116,24 +116,24 @@ function CartPage({
           {/* Order summary & Delivery info */}
           <div className="xl:col-span-4 flex flex-col gap-6">
             <div className="glass-card">
-              <h3 className="font-bold text-white text-lg mb-4 border-b border-white/5 pb-2">
+              <h3 className="font-bold text-text-primary text-lg mb-4 border-b border-slate-200/60 pb-2">
                 Hóa đơn tạm tính
               </h3>
               <div className="flex items-center justify-between mb-3 text-sm text-text-secondary">
                 <span>Tổng số lượng</span>
-                <span className="text-white font-semibold">
+                <span className="text-text-primary font-semibold">
                   {cartDetails.reduce((sum, i) => sum + i.quantity, 0)} sản phẩm
                 </span>
               </div>
-              <div className="flex items-center justify-between mb-6 text-base text-white font-bold">
+              <div className="flex items-center justify-between mb-6 text-base text-text-primary font-bold">
                 <span>Tổng cộng</span>
-                <span className="text-emerald-400">
+                <span className="text-emerald-600">
                   {formatPrice(cartDetails.reduce((sum, i) => sum + (i.product?.price || 0) * i.quantity, 0))}
                 </span>
               </div>
 
-              <form onSubmit={handleCheckoutSubmit} className="border-t border-white/5 pt-4">
-                <h4 className="font-bold text-white text-sm mb-3">Thông tin giao hàng (COD)</h4>
+              <form onSubmit={handleCheckoutSubmit} className="border-t border-slate-200/60 pt-4">
+                <h4 className="font-bold text-text-primary text-sm mb-3">Thông tin giao hàng (COD)</h4>
                 <div className="form-group">
                   <label className="form-label">Người nhận</label>
                   <input 
@@ -168,7 +168,7 @@ function CartPage({
                 </div>
 
                 {orderingMessage && (
-                  <p className="text-xs text-indigo-300 text-center mb-3 animate-pulse">
+                  <p className="text-xs text-indigo-600 text-center mb-3 animate-pulse">
                     {orderingMessage}
                   </p>
                 )}

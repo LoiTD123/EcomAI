@@ -61,7 +61,7 @@ function ShopPage({ user, onProductClick }) {
             onChange={e => setSearchQuery(e.target.value)}
             className="form-input pr-10"
           />
-          <button type="submit" className="absolute right-3 top-3 text-text-secondary hover:text-white">
+          <button type="submit" className="absolute right-3 top-3 text-text-secondary hover:text-text-primary">
             <Search className="h-5 w-5" />
           </button>
         </form>
@@ -97,7 +97,7 @@ function ShopPage({ user, onProductClick }) {
       {/* Product Catalog Grid */}
       {loadingProducts ? (
         <div className="flex-1 flex items-center justify-center py-20">
-          <RefreshCw className="h-8 w-8 animate-spin text-indigo-400" />
+          <RefreshCw className="h-8 w-8 animate-spin text-indigo-600" />
         </div>
       ) : products.length === 0 ? (
         <div className="glass-card text-center py-20">

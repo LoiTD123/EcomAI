@@ -170,9 +170,21 @@ class HybridService:
                 resp = requests.get(f"{PRODUCT_SERVICE_URL}/api/v1/products/{pid}", headers=headers, timeout=2)
                 if resp.status_code == 200:
                     data = resp.json()
+                    
+                    # Extract primary image URL
+                    img_list = data.get('images', [])
+                    primary_img = next((img['image_url'] for img in img_list if img.get('is_primary')), None)
+                    if not primary_img and img_list:
+                        primary_img = img_list[0].get('image_url')
+
                     final_list.append({
                         "id": pid,
                         "name": data['name'],
+                        "price": float(data['price']) if data.get('price') else None,
+                        "product_type": data.get('product_type'),
+                        "category": data.get('category'),
+                        "description": data.get('description'),
+                        "image": primary_img,
                         "score": round(score, 4)
                     })
             except Exception as e:
@@ -195,6 +207,11 @@ class HybridService:
                         final_list.append({
                             "id": p['id'],
                             "name": p['name'],
+                            "price": float(p['price']) if p.get('price') else None,
+                            "product_type": p.get('product_type'),
+                            "category": p.get('category'),
+                            "description": p.get('description'),
+                            "image": p.get('image'),
                             "score": 0.0
                         })
             except Exception:

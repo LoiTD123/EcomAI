@@ -20,22 +20,22 @@ function ManagementDashboard({ user, onLogout, onUpdateUser }) {
   return (
     <div className="flex-1 flex flex-col w-full min-h-screen text-text-primary">
       {/* Header Quản Trị */}
-      <header className="glass px-6 py-4 flex items-center justify-between sticky top-0 z-10 border-b border-white/5">
+      <header className="glass px-6 py-4 flex items-center justify-between sticky top-0 z-10 border-b border-slate-200/60">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
             <ShieldAlert className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-tight bg-gradient-to-r from-indigo-200 to-white bg-clip-text text-transparent">
+            <h1 className="text-lg font-bold tracking-tight bg-gradient-to-r from-indigo-600 via-indigo-700 to-emerald-600 bg-clip-text text-transparent">
               Hệ Thống Quản Trị E-Com
             </h1>
             <div className="flex items-center gap-2 mt-0.5">
               <p className="text-[10px] text-text-secondary font-medium tracking-wider uppercase">
-                Tài khoản: {user.username} • <span className="text-indigo-400 font-bold">{user.role}</span>
+                Tài khoản: {user.username} • <span className="text-indigo-600 font-bold">{user.role}</span>
               </p>
               <button 
                 onClick={() => setShowProfileModal(true)} 
-                className="text-[9px] font-bold text-indigo-400 hover:text-indigo-300 border border-indigo-500/30 hover:border-indigo-400 px-1.5 py-0.5 rounded uppercase tracking-widest transition-colors bg-indigo-500/5"
+                className="text-[9px] font-bold text-indigo-600 hover:text-indigo-700 border border-indigo-200 hover:border-indigo-300 px-1.5 py-0.5 rounded uppercase tracking-widest transition-colors bg-indigo-50"
               >
                 Sửa Profile
               </button>

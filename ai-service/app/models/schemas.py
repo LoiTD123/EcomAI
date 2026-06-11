@@ -14,6 +14,11 @@ class ProductScore(BaseModel):
     id: int
     name: str
     score: float
+    price: Optional[float] = None
+    product_type: Optional[str] = None
+    category: Optional[str] = None
+    description: Optional[str] = None
+    image: Optional[str] = None
 
 class RecommendResponse(BaseModel):
     results: List[ProductScore]

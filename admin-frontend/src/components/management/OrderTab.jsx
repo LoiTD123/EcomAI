@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, X, RefreshCw } from 'lucide-react';
+import { ShoppingBag, X, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { orderAPI, productAPI } from '../../services/api';
 import { formatPrice } from '../../utils/format';
 import OrderDetailModal from '../OrderDetailModal';
@@ -14,6 +14,11 @@ function OrderTab() {
     status: 'CONFIRMED',
     comment: ''
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedOrders = orders.slice(startIndex, startIndex + itemsPerPage);
 
   useEffect(() => {
     loadOrders();
@@ -80,32 +85,32 @@ function OrderTab() {
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
       <div>
-        <h2 className="text-xl font-bold text-white">Quản Lý Đơn Hàng</h2>
+        <h2 className="text-xl font-bold text-text-primary">Quản Lý Đơn Hàng</h2>
         <p className="text-xs text-text-secondary">Duyệt và cập nhật trạng thái đơn hàng của tất cả khách hàng.</p>
       </div>
 
       {selectedOrder ? (
         <div className="glass-card">
-          <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
-            <h3 className="text-lg font-bold text-white">
+          <div className="flex items-center justify-between mb-6 border-b border-slate-200/60 pb-4">
+            <h3 className="text-lg font-bold text-text-primary">
               Cập Nhật Đơn Hàng #{selectedOrder.order_id}
             </h3>
             <button 
               onClick={() => setSelectedOrder(null)}
-              className="text-text-secondary hover:text-white"
+              className="text-text-secondary hover:text-text-primary"
             >
               <X className="h-6 w-6" />
             </button>
           </div>
 
-          <div className="mb-6 grid grid-cols-2 gap-4 text-sm bg-black/20 p-4 rounded-xl border border-white/5">
+          <div className="mb-6 grid grid-cols-2 gap-4 text-sm bg-slate-50 p-4 rounded-xl border border-slate-200/60">
             <div>
               <p className="text-text-secondary text-xs uppercase tracking-wider">Tổng số tiền</p>
-              <p className="text-lg font-bold text-emerald-400 mt-0.5">{formatPrice(selectedOrder.total_amount)}</p>
+              <p className="text-lg font-bold text-emerald-600 mt-0.5">{formatPrice(selectedOrder.total_amount)}</p>
             </div>
             <div>
               <p className="text-text-secondary text-xs uppercase tracking-wider">Trạng thái hiện tại</p>
-              <p className="text-sm font-bold text-indigo-300 mt-1 uppercase">{selectedOrder.status}</p>
+              <p className="text-sm font-bold text-indigo-600 mt-1 uppercase">{selectedOrder.status}</p>
             </div>
           </div>
 
@@ -115,7 +120,7 @@ function OrderTab() {
               <select
                 value={orderStatusForm.status}
                 onChange={e => setOrderStatusForm(prev => ({ ...prev, status: e.target.value }))}
-                className="form-input bg-black/40 border border-white/5"
+                className="form-input bg-white/60 border border-slate-200/60 text-text-primary"
               >
                 <option value="PENDING">PENDING (Chờ xử lý)</option>
                 <option value="CONFIRMED">CONFIRMED (Đã xác nhận / Đóng gói)</option>
@@ -136,7 +141,7 @@ function OrderTab() {
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200/60">
               <button 
                 type="button" 
                 onClick={() => setSelectedOrder(null)}
@@ -156,11 +161,11 @@ function OrderTab() {
           </form>
         </div>
       ) : (
-        <div className="glass rounded-2xl overflow-hidden border border-white/5">
+        <div className="glass rounded-2xl overflow-hidden border border-slate-200/60">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-black/30 border-b border-white/5 text-[10px] uppercase tracking-wider text-text-secondary">
+                <tr className="bg-slate-100 border-b border-slate-200/60 text-[10px] uppercase tracking-wider text-text-secondary">
                   <th className="py-4 px-6">Đơn Hàng ID</th>
                   <th className="py-4 px-6">User ID</th>
                   <th className="py-4 px-6">Ngày đặt</th>
@@ -169,11 +174,11 @@ function OrderTab() {
                   <th className="py-4 px-6 text-center">Hành động</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-sm">
+              <tbody className="divide-y divide-slate-200/60 text-sm">
                 {loading ? (
                   <tr>
                     <td colSpan="6" className="py-10 text-center text-text-secondary">
-                      <RefreshCw className="h-6 w-6 animate-spin mx-auto text-indigo-400 mb-2" />
+                      <RefreshCw className="h-6 w-6 animate-spin mx-auto text-indigo-600 mb-2" />
                       Đang tải danh sách đơn hàng...
                     </td>
                   </tr>
@@ -184,25 +189,25 @@ function OrderTab() {
                     </td>
                   </tr>
                 ) : (
-                  orders.map(o => (
-                    <tr key={o.order_id} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-4 px-6 font-mono text-sm font-semibold text-white">#{o.order_id}</td>
+                  paginatedOrders.map(o => (
+                    <tr key={o.order_id} className="hover:bg-black/[0.02] transition-colors">
+                      <td className="py-4 px-6 font-mono text-sm font-semibold text-text-primary">#{o.order_id}</td>
                       <td className="py-4 px-6 text-text-secondary font-mono text-xs">User: {o.user_id}</td>
                       <td className="py-4 px-6 text-text-secondary">
                         {new Date(o.created_at).toLocaleString('vi-VN')}
                       </td>
-                      <td className="py-4 px-6 text-right font-bold text-emerald-400">{formatPrice(o.total_amount)}</td>
+                      <td className="py-4 px-6 text-right font-bold text-emerald-600">{formatPrice(o.total_amount)}</td>
                       <td className="py-4 px-6 text-center">
                         <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${
                           o.status === 'DELIVERED' 
-                            ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+                            ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
                             : o.status === 'CANCELLED'
-                            ? 'bg-red-500/10 text-red-300 border-red-500/20'
+                            ? 'bg-red-50 text-red-600 border-red-200'
                             : o.status === 'CONFIRMED'
-                            ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                            ? 'bg-amber-50 text-amber-600 border-amber-200'
                             : o.status === 'SHIPPING'
-                            ? 'bg-blue-500/10 text-blue-300 border-blue-500/20'
-                            : 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20'
+                            ? 'bg-blue-50 text-blue-600 border-blue-200'
+                            : 'bg-indigo-50 text-indigo-600 border-indigo-200'
                         }`}>
                           {o.status}
                         </span>
@@ -232,6 +237,33 @@ function OrderTab() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {orders.length > itemsPerPage && (
+            <div className="flex justify-between items-center bg-slate-50 border-t border-slate-200/60 p-4">
+              <button
+                type="button"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="btn btn-secondary py-1.5 px-3 flex items-center gap-1 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="h-4 w-4" /> Trang trước
+              </button>
+
+              <span className="text-xs text-text-secondary">
+                Trang <strong>{currentPage}</strong> / {totalPages}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage(prev => (currentPage < totalPages ? prev + 1 : prev))}
+                disabled={currentPage === totalPages}
+                className="btn btn-secondary py-1.5 px-3 flex items-center gap-1 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Trang sau <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
       )}
       <OrderDetailModal 

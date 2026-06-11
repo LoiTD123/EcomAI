@@ -35,50 +35,50 @@ function AdminAuthPage({ onAuthSuccess }) {
 
   return (
     <main className="flex-1 flex items-center justify-center p-6 min-h-[85vh]">
-      <div className="glass-card w-full max-w-md border-red-500/10 shadow-red-950/20 shadow-2xl animate-fade-in">
+      <div className="glass-card w-full max-w-md border-slate-200 shadow-2xl animate-fade-in">
         <div className="text-center mb-6">
-          <div className="mx-auto h-12 w-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-3 text-red-400">
+          <div className="mx-auto h-12 w-12 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center mb-3 text-red-600">
             <ShieldAlert className="h-6 w-6" />
           </div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-red-400 to-amber-300 bg-clip-text text-transparent">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-amber-600 bg-clip-text text-transparent">
             Đăng Nhập Quản Trị
           </h2>
         </div>
 
         {authError && (
-          <div className="bg-red-500/15 border border-red-500/30 text-red-300 p-3 rounded-lg text-xs mb-4 text-center">
+          <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-lg text-xs mb-4 text-center">
             {authError}
           </div>
         )}
 
         <form onSubmit={handleAuthSubmit} className="space-y-4">
           <div className="form-group">
-            <label className="form-label text-red-400/80">Username</label>
+            <label className="form-label text-text-secondary">Username</label>
             <input 
               type="text" 
               value={username} 
               onChange={e => setUsername(e.target.value)} 
-              className="form-input border-red-500/10 focus:border-red-500/40 focus:ring-red-500/10 bg-black/45" 
+              className="form-input border-slate-200 focus:border-red-500/45 bg-white/60" 
               placeholder="Nhập tên đăng nhập quản trị" 
               required 
             />
           </div>
 
           <div className="form-group">
-            <label className="form-label text-red-400/80">Mật mã (Password)</label>
+            <label className="form-label text-text-secondary">Mật mã (Password)</label>
             <div className="relative">
               <input 
                 type={showPassword ? "text" : "password"} 
                 value={password} 
                 onChange={e => setPassword(e.target.value)} 
-                className="form-input border-red-500/10 focus:border-red-500/40 focus:ring-red-500/10 bg-black/45 pr-10" 
+                className="form-input border-slate-200 focus:border-red-500/45 bg-white/60 pr-10" 
                 placeholder="••••••••" 
                 required 
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3.5 text-text-secondary hover:text-white"
+                className="absolute right-3 top-3.5 text-text-secondary hover:text-text-primary"
               >
                 {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
               </button>

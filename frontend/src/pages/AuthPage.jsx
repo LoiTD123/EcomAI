@@ -49,16 +49,16 @@ function AuthPage({ onAuthSuccess, onGoToAdmin }) {
     <main className="flex-1 flex items-center justify-center p-6 min-h-[85vh]">
       <div className="glass-card w-full max-w-md animate-fade-in">
         <div className="text-center mb-6">
-          <div className="mx-auto h-12 w-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-3 text-indigo-400">
+          <div className="mx-auto h-12 w-12 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center mb-3 text-indigo-600">
             <ShoppingBag className="h-6 w-6" />
           </div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-emerald-600 bg-clip-text text-transparent">
             {authMode === 'login' ? 'Đăng Nhập' : 'Đăng Ký'}
           </h2>
         </div>
 
         {authError && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg text-xs mb-4 text-center">
+          <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-lg text-xs mb-4 text-center">
             {authError}
           </div>
         )}
@@ -129,7 +129,7 @@ function AuthPage({ onAuthSuccess, onGoToAdmin }) {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3.5 text-text-secondary hover:text-white"
+                className="absolute right-3 top-3.5 text-text-secondary hover:text-text-primary"
               >
                 {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
               </button>
@@ -147,7 +147,7 @@ function AuthPage({ onAuthSuccess, onGoToAdmin }) {
               Chưa có tài khoản?{' '}
               <button 
                 onClick={() => setAuthMode('register')} 
-                className="text-indigo-400 hover:underline font-medium"
+                className="text-indigo-600 hover:underline font-medium"
               >
                 Đăng ký ngay
               </button>
@@ -157,7 +157,7 @@ function AuthPage({ onAuthSuccess, onGoToAdmin }) {
               Đã có tài khoản?{' '}
               <button 
                 onClick={() => setAuthMode('login')} 
-                className="text-indigo-400 hover:underline font-medium"
+                className="text-indigo-600 hover:underline font-medium"
               >
                 Đăng nhập
               </button>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, X, RefreshCw, Edit, Trash2, Upload, Search } from 'lucide-react';
+import { Package, Plus, X, RefreshCw, Edit, Trash2, Upload, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { productAPI } from '../../services/api';
 import { formatPrice, resolveImageUrl } from '../../utils/format';
 
@@ -12,12 +12,22 @@ function ProductTab() {
   const [editingProductId, setEditingProductId] = useState(null);
   const [imageUploading, setImageUploading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.id.toString().includes(searchTerm) ||
     (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const itemsPerPage = 8;
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
 
   const [productForm, setProductForm] = useState({
     name: '',
@@ -233,7 +243,7 @@ function ProductTab() {
     <div className="flex flex-col gap-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white">Quản Lý Sản Phẩm</h2>
+          <h2 className="text-xl font-bold text-text-primary">Quản Lý Sản Phẩm</h2>
           <p className="text-xs text-text-secondary">Xem và bổ sung các sản phẩm trong kho hệ thống.</p>
         </div>
         {!showAddProduct && (
@@ -249,13 +259,13 @@ function ProductTab() {
 
       {showAddProduct ? (
         <div className="glass-card">
-          <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
-            <h3 className="text-lg font-bold text-white">
+          <div className="flex items-center justify-between mb-6 border-b border-slate-200/60 pb-4">
+            <h3 className="text-lg font-bold text-text-primary">
               {editMode ? 'Chỉnh Sửa Sản Phẩm' : 'Thêm Sản Phẩm Mới'}
             </h3>
             <button 
               onClick={handleCancel}
-              className="text-text-secondary hover:text-white"
+              className="text-text-secondary hover:text-text-primary"
             >
               <X className="h-6 w-6" />
             </button>
@@ -275,7 +285,7 @@ function ProductTab() {
                     if (type === 'FASHION') catId = '3';
                     setProductForm(prev => ({ ...prev, product_type: type, category_id: catId }));
                   }}
-                  className="form-input bg-black/40 border border-white/5 disabled:opacity-50"
+                  className="form-input bg-white/60 border border-slate-200/60 disabled:opacity-50 text-text-primary"
                 >
                   <option value="BOOK">Sách (BOOK)</option>
                   <option value="ELECTRONICS">Thiết bị điện tử (ELECTRONICS)</option>
@@ -288,7 +298,7 @@ function ProductTab() {
                 <select 
                   value={productForm.category_id}
                   onChange={e => setProductForm(prev => ({ ...prev, category_id: e.target.value }))}
-                  className="form-input bg-black/40 border border-white/5"
+                  className="form-input bg-white/60 border border-slate-200/60 text-text-primary"
                 >
                   <option value="1">Sách (ID: 1)</option>
                   <option value="2">Đồ Điện Tử (ID: 2)</option>
@@ -345,8 +355,8 @@ function ProductTab() {
               <div className="form-group col-span-2 md:col-span-1">
                 <label className="form-label">Hình ảnh sản phẩm</label>
                 <div className="flex items-center gap-3">
-                  <label className="btn btn-secondary py-2 px-3 text-xs flex items-center gap-2 cursor-pointer border border-white/10 bg-white/5 hover:bg-white/10">
-                    <Upload className="h-4 w-4 text-indigo-400" />
+                  <label className="btn btn-secondary py-2 px-3 text-xs flex items-center gap-2 cursor-pointer border border-slate-200 bg-slate-50 hover:bg-slate-100">
+                    <Upload className="h-4 w-4 text-indigo-600" />
                     Chọn ảnh
                     <input 
                       type="file" 
@@ -355,9 +365,9 @@ function ProductTab() {
                       className="hidden"
                     />
                   </label>
-                  {imageUploading && <RefreshCw className="h-4 w-4 animate-spin text-indigo-400" />}
+                  {imageUploading && <RefreshCw className="h-4 w-4 animate-spin text-indigo-600" />}
                   {productForm.imageUrl && (
-                    <div className="relative group h-10 w-10 border border-white/10 rounded overflow-hidden">
+                    <div className="relative group h-10 w-10 border border-slate-200 rounded overflow-hidden">
                       <img src={resolveImageUrl(productForm.imageUrl)} alt="Uploaded" className="h-full w-full object-cover" />
                       <button 
                         type="button"
@@ -383,8 +393,8 @@ function ProductTab() {
               />
             </div>
 
-            <div className="border-t border-white/5 pt-4">
-              <h4 className="text-sm font-bold text-indigo-300 mb-4">Thông tin chi tiết đặc thù</h4>
+            <div className="border-t border-slate-200/60 pt-4">
+              <h4 className="text-sm font-bold text-indigo-600 mb-4">Thông tin chi tiết đặc thù</h4>
               
               {productForm.product_type === 'BOOK' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -534,7 +544,7 @@ function ProductTab() {
               )}
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200/60">
               <button 
                 type="button" 
                 onClick={handleCancel}
@@ -574,11 +584,11 @@ function ProductTab() {
             </span>
           </div>
 
-          <div className="glass rounded-2xl overflow-hidden border border-white/5">
+          <div className="glass rounded-2xl overflow-hidden border border-slate-200/60">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-black/30 border-b border-white/5 text-[10px] uppercase tracking-wider text-text-secondary">
+                  <tr className="bg-slate-100 border-b border-slate-200/60 text-[10px] uppercase tracking-wider text-text-secondary">
                     <th className="py-4 px-6">ID</th>
                     <th className="py-4 px-6">Tên sản phẩm</th>
                     <th className="py-4 px-6">Loại</th>
@@ -588,11 +598,11 @@ function ProductTab() {
                     <th className="py-4 px-6 text-center">Hành động</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5 text-sm">
+                <tbody className="divide-y divide-slate-200/60 text-sm">
                   {loading ? (
                     <tr>
                       <td colSpan="7" className="py-10 text-center text-text-secondary">
-                        <RefreshCw className="h-6 w-6 animate-spin mx-auto text-indigo-400 mb-2" />
+                        <RefreshCw className="h-6 w-6 animate-spin mx-auto text-indigo-600 mb-2" />
                         Đang tải danh sách sản phẩm...
                       </td>
                     </tr>
@@ -603,41 +613,41 @@ function ProductTab() {
                       </td>
                     </tr>
                   ) : (
-                    filteredProducts.map(p => (
-                      <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
+                    paginatedProducts.map(p => (
+                      <tr key={p.id} className="hover:bg-black/[0.02] transition-colors">
                          <td className="py-4 px-6 font-mono text-xs text-text-muted">{p.id}</td>
                         <td className="py-4 px-6">
                           <div className="flex items-center gap-3">
                             {p.image ? (
-                              <img src={resolveImageUrl(p.image)} alt={p.name} className="h-8 w-8 rounded object-cover bg-black/40 border border-white/5" />
+                              <img src={resolveImageUrl(p.image)} alt={p.name} className="h-8 w-8 rounded object-cover bg-slate-100 border border-slate-200/60" />
                             ) : (
                               <span className="text-xl">
                                 {p.product_type === 'BOOK' ? '📚' : p.product_type === 'ELECTRONICS' ? '💻' : '👕'}
                               </span>
                             )}
-                            <span className="font-semibold text-white">{p.name}</span>
+                            <span className="font-semibold text-text-primary">{p.name}</span>
                           </div>
                         </td>
                         <td className="py-4 px-6">
-                          <span className="text-xs font-bold uppercase px-2 py-0.5 bg-indigo-500/10 text-indigo-300 rounded border border-indigo-500/20">
+                          <span className="text-xs font-bold uppercase px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded border border-indigo-200">
                             {p.product_type}
                           </span>
                         </td>
                         <td className="py-4 px-6 text-text-secondary">{p.category}</td>
-                        <td className="py-4 px-6 text-right font-semibold text-emerald-400">{formatPrice(p.price)}</td>
+                        <td className="py-4 px-6 text-right font-semibold text-emerald-600">{formatPrice(p.price)}</td>
                         <td className="py-4 px-6 text-right text-text-secondary font-mono">{p.stock}</td>
                         <td className="py-4 px-6">
                           <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={() => handleEditClick(p)}
-                              className="p-1.5 hover:bg-white/10 rounded text-indigo-400 hover:text-indigo-300 transition-colors"
+                              className="p-1.5 hover:bg-black/5 rounded text-indigo-600 hover:text-indigo-700 transition-colors"
                               title="Sửa sản phẩm"
                             >
                               <Edit className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteClick(p.id)}
-                              className="p-1.5 hover:bg-red-500/10 rounded text-red-400 hover:text-red-300 transition-colors"
+                              className="p-1.5 hover:bg-red-50 rounded text-red-600 hover:text-red-700 transition-colors"
                               title="Xóa sản phẩm"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -650,6 +660,33 @@ function ProductTab() {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {filteredProducts.length > itemsPerPage && (
+              <div className="flex justify-between items-center bg-slate-50 border-t border-slate-200/60 p-4">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="btn btn-secondary py-1.5 px-3 flex items-center gap-1 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="h-4 w-4" /> Trang trước
+                </button>
+
+                <span className="text-xs text-text-secondary">
+                  Trang <strong>{currentPage}</strong> / {totalPages}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(prev => (currentPage < totalPages ? prev + 1 : prev))}
+                  disabled={currentPage === totalPages}
+                  className="btn btn-secondary py-1.5 px-3 flex items-center gap-1 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Trang sau <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

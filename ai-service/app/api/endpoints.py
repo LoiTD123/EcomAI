@@ -61,7 +61,16 @@ async def recommend(
             token=authorization,
             limit=limit
         )
-        scores = [ProductScore(id=p['id'], name=p['name'], score=p['score']) for p in results]
+        scores = [ProductScore(
+            id=p['id'],
+            name=p['name'],
+            score=p['score'],
+            price=p.get('price'),
+            product_type=p.get('product_type'),
+            category=p.get('category'),
+            description=p.get('description'),
+            image=p.get('image')
+        ) for p in results]
         return RecommendResponse(results=scores)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

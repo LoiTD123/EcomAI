@@ -91,33 +91,33 @@ function ProfileModal({ isOpen, onClose, user, onUpdateSuccess }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="glass-card w-full max-w-md animate-fade-in relative border border-white/10 shadow-2xl">
+      <div className="glass-card w-full max-w-md animate-fade-in relative border border-slate-200 shadow-2xl">
         <button 
           onClick={onClose}
-          className="absolute top-4 right-4 text-text-secondary hover:text-white transition-colors"
+          className="absolute top-4 right-4 text-text-secondary hover:text-text-primary transition-colors"
         >
           <X className="h-5 w-5" />
         </button>
 
-        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
-          <div className="h-10 w-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-200/60">
+          <div className="h-10 w-10 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600">
             <User className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white">Thông Tin Cá Nhân</h3>
+            <h3 className="text-lg font-bold text-text-primary">Thông Tin Cá Nhân</h3>
             <p className="text-xs text-text-secondary">Chỉnh sửa hồ sơ tài khoản của bạn.</p>
           </div>
         </div>
 
         {loading ? (
           <div className="py-12 flex flex-col items-center justify-center text-text-secondary">
-            <RefreshCw className="h-8 w-8 animate-spin text-indigo-400 mb-2" />
+            <RefreshCw className="h-8 w-8 animate-spin text-indigo-600 mb-2" />
             Đang tải thông tin...
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg text-xs text-center">
+              <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-lg text-xs text-center">
                 {error}
               </div>
             )}
@@ -130,7 +130,7 @@ function ProfileModal({ isOpen, onClose, user, onUpdateSuccess }) {
                 type="text" 
                 value={formData.username}
                 disabled 
-                className="form-input bg-black/40 border border-white/5 opacity-55 cursor-not-allowed"
+                className="form-input bg-slate-100 border border-slate-200/60 opacity-55 cursor-not-allowed"
               />
             </div>
 
@@ -167,8 +167,8 @@ function ProfileModal({ isOpen, onClose, user, onUpdateSuccess }) {
               />
             </div>
 
-            <div className="border-t border-white/5 pt-4">
-              <h4 className="text-xs font-bold text-indigo-300 mb-3 flex items-center gap-1.5">
+            <div className="border-t border-slate-200/60 pt-4">
+              <h4 className="text-xs font-bold text-indigo-600 mb-3 flex items-center gap-1.5">
                 <Lock className="h-3.5 w-3.5" /> Đổi mật khẩu (Bỏ trống nếu giữ nguyên)
               </h4>
               
@@ -196,7 +196,7 @@ function ProfileModal({ isOpen, onClose, user, onUpdateSuccess }) {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200/60">
               <button 
                 type="button" 
                 onClick={onClose}

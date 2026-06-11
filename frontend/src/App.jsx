@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { authAPI, productAPI, cartAPI, orderAPI, aiAPI } from './services/api';
+import { Sparkles } from 'lucide-react';
 
 // Components
 import Header from './components/Header';
@@ -38,6 +39,7 @@ function App() {
     { role: 'model', message: 'Xin chào! Tôi là trợ lý mua sắm AI. Tôi có thể giúp bạn tìm kiếm sách, đồ điện tử hoặc quần áo thời trang. Bạn cần tư vấn gì hôm nay?' }
   ]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [aiRecommendations, setAiRecommendations] = useState([]);
   
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -167,7 +169,7 @@ function App() {
 
   const loadAIRecommendations = async () => {
     try {
-      const resp = await aiAPI.recommend(5);
+      const resp = await aiAPI.recommend(8);
       setAiRecommendations(resp.data.results);
     } catch (err) {
       console.error(err);
@@ -269,32 +271,36 @@ function App() {
             onLogout={handleLogout} 
             onEditProfile={() => setShowProfileModal(true)}
           />
-          <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6">
-            {/* Shop/Cart/Orders Panels (Columns 1 to 8) */}
-            <div className="lg:col-span-8 flex flex-col gap-6">
-              
-              {/* Navigation for Mobile */}
-              <div className="flex md:hidden items-center justify-between glass p-2 rounded-xl">
-                <button 
-                  onClick={() => setActiveTab('shop')} 
-                  className={`btn flex-1 py-2 ${activeTab === 'shop' ? 'btn-primary' : 'btn-secondary'}`}
-                >
-                  Shop
-                </button>
-                <button 
-                  onClick={() => setActiveTab('cart')} 
-                  className={`btn flex-1 py-2 ${activeTab === 'cart' ? 'btn-primary' : 'btn-secondary'}`}
-                >
-                  Giỏ hàng
-                </button>
-                <button 
-                  onClick={() => setActiveTab('orders')} 
-                  className={`btn flex-1 py-2 ${activeTab === 'orders' ? 'btn-primary' : 'btn-secondary'}`}
-                >
-                  Đơn hàng
-                </button>
-              </div>
+          <main className="flex-1 p-6">
+            {/* Navigation for Mobile */}
+            <div className="flex md:hidden items-center justify-between glass p-2 rounded-xl mb-6 gap-1 overflow-x-auto">
+              <button 
+                onClick={() => setActiveTab('shop')} 
+                className={`btn flex-1 py-2 text-xs ${activeTab === 'shop' ? 'btn-primary' : 'btn-secondary'}`}
+              >
+                Shop
+              </button>
+              <button 
+                onClick={() => setActiveTab('cart')} 
+                className={`btn flex-1 py-2 text-xs ${activeTab === 'cart' ? 'btn-primary' : 'btn-secondary'}`}
+              >
+                Giỏ hàng
+              </button>
+              <button 
+                onClick={() => setActiveTab('orders')} 
+                className={`btn flex-1 py-2 text-xs ${activeTab === 'orders' ? 'btn-primary' : 'btn-secondary'}`}
+              >
+                Đơn hàng
+              </button>
+              <button 
+                onClick={() => setActiveTab('ai')} 
+                className={`btn flex-1 py-2 text-xs ${activeTab === 'ai' ? 'btn-primary' : 'btn-secondary'}`}
+              >
+                Gợi ý AI
+              </button>
+            </div>
 
+            <div className="w-full">
               {activeTab === 'shop' && (
                 <ShopPage user={user} onProductClick={handleProductClick} />
               )}
@@ -317,25 +323,46 @@ function App() {
                 />
               )}
 
-            </div>
-
-            {/* AI Panel: Chatbot RAG & Recommendations (Columns 9 to 12) */}
-            <div className="lg:col-span-4 flex flex-col gap-6">
-              <AIChatbot 
-                chatMessage={chatMessage}
-                setChatMessage={setChatMessage}
-                chatHistory={chatHistory}
-                chatLoading={chatLoading}
-                onSendMessage={handleSendChatMessage}
-              />
-
-              <AIRecommendations 
-                aiRecommendations={aiRecommendations}
-                onLoadRecommendations={loadAIRecommendations}
-                onProductClick={handleProductClick}
-              />
+              {activeTab === 'ai' && (
+                <div className="w-full">
+                  <AIRecommendations 
+                    aiRecommendations={aiRecommendations}
+                    onLoadRecommendations={loadAIRecommendations}
+                    onProductClick={handleProductClick}
+                  />
+                </div>
+              )}
             </div>
           </main>
+
+          {/* Floating AI Chatbot Widget */}
+          {user && (
+            <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+              {isChatOpen && (
+                <div className="w-[520px] max-w-[calc(100vw-2rem)] h-[640px] glass border border-slate-200/60 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-300">
+                  <div className="flex-1 flex flex-col p-3.5 bg-white/90 backdrop-blur-xl overflow-hidden">
+                    <AIChatbot 
+                      chatMessage={chatMessage}
+                      setChatMessage={setChatMessage}
+                      chatHistory={chatHistory}
+                      chatLoading={chatLoading}
+                      onSendMessage={handleSendChatMessage}
+                      isWidget={true}
+                      onClose={() => setIsChatOpen(false)}
+                    />
+                  </div>
+                </div>
+              )}
+              
+              <button
+                onClick={() => setIsChatOpen(!isChatOpen)}
+                className={`h-14 w-14 rounded-full bg-gradient-to-tr from-indigo-500 to-emerald-400 text-white flex items-center justify-center shadow-[0_8px_30px_rgba(99,102,241,0.3)] hover:shadow-[0_8px_30px_rgba(99,102,241,0.5)] hover:scale-110 active:scale-95 transition-all border border-white/10 ${!isChatOpen ? 'animate-bounce' : ''}`}
+                title="Trò chuyện với AI"
+              >
+                <Sparkles className="h-6 w-6" />
+              </button>
+            </div>
+          )}
         </>
       )}
 
