@@ -100,12 +100,18 @@ class RAGService:
         query_vector = np.array([self.get_embedding(query)]).astype('float32')
         faiss.normalize_L2(query_vector)
         
-        scores, indices = self.index.search(query_vector, min(top_k, len(self.product_ids)))
+        # Search more candidates than top_k to allow robust deduplication
+        search_k = min(top_k * 5, len(self.product_ids))
+        scores, indices = self.index.search(query_vector, search_k)
         
         matched_ids = []
         for idx in indices[0]:
             if idx != -1 and idx < len(self.product_ids):
-                matched_ids.append(self.product_ids[idx])
+                pid = self.product_ids[idx]
+                if pid not in matched_ids:
+                    matched_ids.append(pid)
+                    if len(matched_ids) >= top_k:
+                        break
         return matched_ids
 
     def chatbot_response(self, session_id: str, message: str, user_id: int = None, chat_history: List[Dict] = None) -> Dict:
@@ -152,16 +158,36 @@ class RAGService:
 
         # 4. Generate response via Gemini API or Mock
         bot_response = ""
+        gemini_success = False
         if GEMINI_API_KEY:
             try:
-                model = genai.GenerativeModel("gemini-1.5-flash")
+                model = genai.GenerativeModel("gemini-2.5-flash")
                 response = model.generate_content(prompt)
                 bot_response = response.text
+                gemini_success = True
             except Exception as e:
                 logger.error(f"Gemini generation error: {e}")
-                bot_response = f"Tôi đã tìm thấy sản phẩm liên quan nhưng gặp lỗi hệ thống khi phân tích. Các sản phẩm gợi ý cho bạn: {', '.join([str(i) for i in matched_ids])}."
-        else:
-            bot_response = f"[Mock Response] Cảm ơn câu hỏi của bạn. Dựa trên thông tin tìm kiếm, tôi đề xuất bạn nên xem sản phẩm ID: {', '.join([str(i) for i in matched_ids])}. Bạn có muốn tôi giới thiệu thêm không?"
+                
+        if not gemini_success:
+            # Rich local database fallback
+            details_list = []
+            for pid in matched_ids:
+                try:
+                    resp = requests.get(f"{PRODUCT_SERVICE_URL}/api/v1/products/{pid}", timeout=3)
+                    if resp.status_code == 200:
+                        prod = resp.json()
+                        desc = prod.get('description', '')[:120] + '...' if prod.get('description') else ''
+                        price_val = prod.get('price')
+                        price_fmt = f"{int(float(price_val)):,}đ" if price_val else "Đang cập nhật"
+                        details_list.append(f"• **{prod['name']}** (Mã SP: {prod['id']}) - Giá: {price_fmt}\n  *{desc}*")
+                except Exception:
+                    pass
+            
+            if details_list:
+                msg_prefix = "Xin chào! Dưới đây là các sản phẩm phù hợp nhất trong kho hàng mà tôi tìm thấy cho yêu cầu của bạn:\n\n"
+                bot_response = msg_prefix + "\n".join(details_list) + "\n\nBạn có muốn tôi tư vấn thêm về sản phẩm nào ở trên không?"
+            else:
+                bot_response = f"Tôi đề xuất bạn xem các sản phẩm có mã ID: {', '.join([str(i) for i in matched_ids])}. Hiện tại hệ thống không thể tải thông tin chi tiết."
 
         return {
             "response": bot_response,

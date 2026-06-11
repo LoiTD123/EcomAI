@@ -223,7 +223,7 @@ services:
       - NEO4J_PASSWORD=password
       - SQL_DATABASE_URL=sqlite:///data/ai_logs.db
       - PRODUCT_SERVICE_URL=http://product-service:8000
-      - GEMINI_API_KEY=AIzaSyBM92SPwgXJQS9imUPF_UdntKw4GEkOlXg
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     volumes:
       - ai_data:/app/data
     depends_on:

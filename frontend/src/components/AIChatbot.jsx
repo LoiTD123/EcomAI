@@ -25,22 +25,105 @@ function AIChatbot({
 
       {/* Chat Message Window */}
       <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-3 mb-3">
-        {chatHistory.map((chat, idx) => (
-          <div 
-            key={idx} 
-            className={`flex flex-col max-w-[85%] rounded-2xl p-3 text-sm ${
-              chat.role === 'user' 
-                ? 'bg-indigo-600 text-white self-end rounded-tr-none' 
-                : 'bg-white/5 text-text-primary self-start rounded-tl-none border border-white/5'
-            }`}
-          >
-            <p>{chat.message}</p>
-          </div>
-        ))}
+        {chatHistory.map((chat, idx) => {
+          // Custom local markdown-like parser for beautiful typography
+          const renderFormattedMessage = (text) => {
+            if (!text) return null;
+            const lines = text.split('\n');
+            return lines.map((line, lIdx) => {
+              // Helper to parse and style **bold** text
+              const formatBold = (str) => {
+                const parts = str.split('**');
+                return parts.map((part, pIdx) => {
+                  if (pIdx % 2 === 1) {
+                    return (
+                      <strong key={pIdx} className="font-semibold text-indigo-300 drop-shadow-[0_0_2px_rgba(99,102,241,0.2)]">
+                        {part}
+                      </strong>
+                    );
+                  }
+                  return part;
+                });
+              };
+
+              // 1. Bullet list items (* or -)
+              const bulletMatch = line.match(/^(\s*)[*-]\s+(.*)$/);
+              if (bulletMatch) {
+                const indent = bulletMatch[1].length;
+                const content = bulletMatch[2];
+                return (
+                  <div 
+                    key={lIdx} 
+                    className="flex items-start gap-2.5 my-1.5" 
+                    style={{ paddingLeft: `${indent * 12 + 4}px` }}
+                  >
+                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-indigo-400 shrink-0 shadow-[0_0_8px_#6366f1]" />
+                    <span className="text-gray-200 text-xs md:text-sm leading-relaxed tracking-wide">
+                      {formatBold(content)}
+                    </span>
+                  </div>
+                );
+              }
+
+              // 2. Numbered list items (e.g. 1., 2.)
+              const numMatch = line.match(/^(\s*)(\d+)\.\s+(.*)$/);
+              if (numMatch) {
+                const indent = numMatch[1].length;
+                const num = numMatch[2];
+                const content = numMatch[3];
+                return (
+                  <div 
+                    key={lIdx} 
+                    className="flex items-start gap-2.5 my-1.5" 
+                    style={{ paddingLeft: `${indent * 12 + 4}px` }}
+                  >
+                    <span className="font-mono text-xs text-indigo-400 font-bold shrink-0 mt-0.5">
+                      {num}.
+                    </span>
+                    <span className="text-gray-200 text-xs md:text-sm leading-relaxed tracking-wide">
+                      {formatBold(content)}
+                    </span>
+                  </div>
+                );
+              }
+
+              // 3. Empty lines (spacing)
+              if (line.trim() === '') {
+                return <div key={lIdx} className="h-2" />;
+              }
+
+              // 4. Normal paragraph
+              return (
+                <p key={lIdx} className="text-gray-200 text-xs md:text-sm leading-relaxed tracking-wide mb-1">
+                  {formatBold(line)}
+                </p>
+              );
+            });
+          };
+
+          return (
+            <div 
+              key={idx} 
+              className={`flex flex-col max-w-[85%] rounded-2xl p-3 text-sm shadow-md transition-all duration-200 hover:shadow-lg ${
+                chat.role === 'user' 
+                  ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white self-end rounded-tr-none shadow-indigo-600/10' 
+                  : 'bg-white/[0.03] backdrop-blur-md text-text-primary self-start rounded-tl-none border border-white/10'
+              }`}
+            >
+              {chat.role === 'user' ? (
+                <p className="text-xs md:text-sm leading-relaxed tracking-wide">{chat.message}</p>
+              ) : (
+                <div className="font-sans space-y-0.5">
+                  {renderFormattedMessage(chat.message)}
+                </div>
+              )}
+            </div>
+          );
+        })}
         {chatLoading && (
-          <div className="bg-white/5 border border-white/5 text-text-secondary self-start rounded-2xl rounded-tl-none p-3 text-sm flex items-center gap-2">
-            <RefreshCw className="h-3.5 w-3.5 animate-spin text-indigo-400" />
-            <span>Đang trích xuất ngữ cảnh và trả lời...</span>
+          <div className="bg-white/[0.03] backdrop-blur-md border border-white/10 text-text-secondary self-start rounded-2xl rounded-tl-none p-3.5 text-xs md:text-sm flex items-center gap-2.5 shadow-md">
+            <RefreshCw className="h-4 w-4 animate-spin text-indigo-400" />
+            <span className="font-medium tracking-wide">Đang phân tích và trả lời...</span>
           </div>
         )}
         <div ref={chatEndRef} />
