@@ -1,0 +1,251 @@
+version: '3.8'
+
+services:
+  # Common MySQL database instance hosting separate databases (for RAM saving on local runs)
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # Script in infrastructure will create separate databases
+      - ./infrastructure/db-init:/docker-entrypoint-initdb.d
+    networks:
+      - ecom_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL database for Product Catalog service
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: product_db
+      POSTGRES_USER: ecom_user
+      POSTGRES_PASSWORD: ecom_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ecom_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Neo4j Graph DB for AI Service relationships
+  neo4j:
+    image: neo4j:5.12-community
+    container_name: neo4j-db
+    environment:
+      NEO4J_AUTH: neo4j/password
+    ports:
+      - "7474:7474" # Neo4j web browser console
+      - "7687:7687" # Bolt port
+    volumes:
+      - neo4j_data:/data
+    networks:
+      - ecom_network
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "password", "RETURN 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # Gateway (Reverse Proxy Nginx)
+  gateway:
+    build: ./gateway
+    container_name: nginx-gateway
+    ports:
+      - "8082:80"
+    depends_on:
+      - user-service
+      - product-service
+      - cart-service
+      - order-service
+      - payment-service
+      - shipping-service
+      - ai-service
+      - frontend
+    networks:
+      - ecom_network
+
+  # User & Authentication Service
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    environment:
+      - SECRET_KEY=django-insecure-some-very-secret-key-12345
+      - DEBUG=True
+      - DB_NAME=user_db
+      - DB_USER=ecom_user
+      - DB_PASSWORD=ecom_password
+      - DB_HOST=mysql-db
+      - DB_PORT=3306
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    command: sh -c "python manage.py makemigrations apps && python manage.py migrate && python manage.py seed_data && python manage.py runserver 0.0.0.0:8000"
+    networks:
+      - ecom_network
+
+  # Product Catalog Service
+  product-service:
+    build: ./product-service
+    container_name: product-service
+    environment:
+      - SECRET_KEY=django-insecure-some-very-secret-key-12345
+      - DEBUG=True
+      - DB_NAME=product_db
+      - DB_USER=ecom_user
+      - DB_PASSWORD=ecom_password
+      - DB_HOST=postgres-db
+      - DB_PORT=5432
+      - AI_SERVICE_URL=http://ai-service:8000
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      ai-service:
+        condition: service_started
+    command: sh -c "python manage.py makemigrations apps && python manage.py migrate && python manage.py seed_data && python manage.py runserver 0.0.0.0:8000"
+    networks:
+      - ecom_network
+
+  # Shopping Cart Service
+  cart-service:
+    build: ./cart-service
+    container_name: cart-service
+    environment:
+      - SECRET_KEY=django-insecure-some-very-secret-key-12345
+      - DEBUG=True
+      - DB_NAME=cart_db
+      - DB_USER=ecom_user
+      - DB_PASSWORD=ecom_password
+      - DB_HOST=mysql-db
+      - DB_PORT=3306
+      - PRODUCT_SERVICE_URL=http://product-service:8000
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      product-service:
+        condition: service_started
+    command: sh -c "python manage.py makemigrations apps && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    networks:
+      - ecom_network
+
+  # Order Management Service
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    environment:
+      - SECRET_KEY=django-insecure-some-very-secret-key-12345
+      - DEBUG=True
+      - DB_NAME=order_db
+      - DB_USER=ecom_user
+      - DB_PASSWORD=ecom_password
+      - DB_HOST=mysql-db
+      - DB_PORT=3306
+      - CART_SERVICE_URL=http://cart-service:8000
+      - PRODUCT_SERVICE_URL=http://product-service:8000
+      - PAYMENT_SERVICE_URL=http://payment-service:8000
+      - SHIPPING_SERVICE_URL=http://shipping-service:8000
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      cart-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+    command: sh -c "python manage.py makemigrations apps && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    networks:
+      - ecom_network
+
+  # Payment Service
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    environment:
+      - SECRET_KEY=django-insecure-some-very-secret-key-12345
+      - DEBUG=True
+      - DB_NAME=payment_db
+      - DB_USER=ecom_user
+      - DB_PASSWORD=ecom_password
+      - DB_HOST=mysql-db
+      - DB_PORT=3306
+      - ORDER_SERVICE_URL=http://order-service:8000
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    command: sh -c "python manage.py makemigrations apps && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    networks:
+      - ecom_network
+
+  # Shipping Service
+  shipping-service:
+    build: ./shipping-service
+    container_name: shipping-service
+    environment:
+      - SECRET_KEY=django-insecure-some-very-secret-key-12345
+      - DEBUG=True
+      - DB_NAME=shipping_db
+      - DB_USER=ecom_user
+      - DB_PASSWORD=ecom_password
+      - DB_HOST=mysql-db
+      - DB_PORT=3306
+      - PAYMENT_SERVICE_URL=http://payment-service:8000
+      - ORDER_SERVICE_URL=http://order-service:8000
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    command: sh -c "python manage.py makemigrations apps && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    networks:
+      - ecom_network
+
+  # AI Engine Service (LSTM, Neo4j, FAISS, Gemini RAG)
+  ai-service:
+    build: ./ai-service
+    container_name: ai-service
+    environment:
+      - SECRET_KEY=django-insecure-some-very-secret-key-12345
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=password
+      - SQL_DATABASE_URL=sqlite:///data/ai_logs.db
+      - PRODUCT_SERVICE_URL=http://product-service:8000
+      - GEMINI_API_KEY=AIzaSyBM92SPwgXJQS9imUPF_UdntKw4GEkOlXg
+    volumes:
+      - ai_data:/app/data
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    networks:
+      - ecom_network
+
+  # Frontend App (React)
+  frontend:
+    build: ./frontend
+    container_name: react-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_GATEWAY_URL=http://localhost:8082
+    networks:
+      - ecom_network
+
+networks:
+  ecom_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  postgres_data:
+  neo4j_data:
+  ai_data:

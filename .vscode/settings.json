@@ -1,0 +1,20 @@
+{
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/user-service",
+    "${workspaceFolder}/product-service",
+    "${workspaceFolder}/cart-service",
+    "${workspaceFolder}/order-service",
+    "${workspaceFolder}/payment-service",
+    "${workspaceFolder}/shipping-service",
+    "${workspaceFolder}/ai-service"
+  ],
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/user-service",
+    "${workspaceFolder}/product-service",
+    "${workspaceFolder}/cart-service",
+    "${workspaceFolder}/order-service",
+    "${workspaceFolder}/payment-service",
+    "${workspaceFolder}/shipping-service",
+    "${workspaceFolder}/ai-service"
+  ]
+}
