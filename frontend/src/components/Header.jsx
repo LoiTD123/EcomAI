@@ -1,7 +1,7 @@
 import React from 'react';
 import { ShoppingBag, Compass, Package, LogOut, Sparkles } from 'lucide-react';
 
-function Header({ user, activeTab, setActiveTab, cartCount, onLogout }) {
+function Header({ user, activeTab, setActiveTab, cartCount, onLogout, onEditProfile }) {
   return (
     <header className="glass rounded-none sticky top-0 z-40 border-b border-white/5 backdrop-blur-md px-6 py-4 flex items-center justify-between">
       <div className="flex items-center gap-3">
@@ -53,7 +53,11 @@ function Header({ user, activeTab, setActiveTab, cartCount, onLogout }) {
                 {user.role}
               </span>
             </div>
-            <div className="bg-white/5 h-10 w-10 rounded-full flex items-center justify-center border border-white/10 text-emerald-400 font-bold">
+            <div 
+              onClick={onEditProfile}
+              className="bg-white/5 h-10 w-10 rounded-full flex items-center justify-center border border-white/10 text-emerald-400 font-bold cursor-pointer hover:border-emerald-400 transition-colors"
+              title="Sửa thông tin cá nhân"
+            >
               {user.username.slice(0, 2).toUpperCase()}
             </div>
             <button onClick={onLogout} className="btn btn-secondary p-2.5 text-red-400 hover:text-red-300" title="Đăng xuất">

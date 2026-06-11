@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatPrice } from '../utils/format';
+import { formatPrice, resolveImageUrl } from '../utils/format';
 
 function ProductCard({ product, onClick }) {
   return (
@@ -10,7 +10,7 @@ function ProductCard({ product, onClick }) {
       <div>
         <div className="h-44 w-full rounded-xl bg-black/40 border border-white/5 flex items-center justify-center overflow-hidden mb-4 relative">
           {product.image ? (
-            <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+            <img src={resolveImageUrl(product.image)} alt={product.name} className="h-full w-full object-cover" />
           ) : (
             <span className="text-5xl">
               {product.product_type === 'BOOK' ? '📚' : product.product_type === 'ELECTRONICS' ? '💻' : '👕'}

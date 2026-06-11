@@ -90,3 +90,22 @@ class ProductService:
     @staticmethod
     def update_stock(product_id, quantity_change):
         return ProductRepository.update_stock(product_id, quantity_change)
+
+    @staticmethod
+    def update_product(product_id, category_id, name, slug, price, stock, description, product_type, details, images=None):
+        return ProductRepository.update_product(
+            product_id=product_id,
+            category_id=category_id,
+            name=name,
+            slug=slug,
+            price=price,
+            stock=stock,
+            description=description,
+            product_type=product_type,
+            details=details,
+            images=images
+        )
+
+    @staticmethod
+    def delete_product(product_id):
+        return ProductRepository.delete_product(product_id)

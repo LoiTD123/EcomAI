@@ -12,11 +12,21 @@ SHIPPING_SERVICE_URL = os.getenv('SHIPPING_SERVICE_URL', 'http://shipping-servic
 
 class OrderService:
     @staticmethod
-    def get_order_details(order_id):
+    def get_order_details(order_id, token=None):
         order = OrderRepository.get_by_id(order_id)
         if not order:
             return None
             
+        shipping_data = None
+        if token:
+            try:
+                headers = {"Authorization": token}
+                ship_resp = requests.get(f"{SHIPPING_SERVICE_URL}/api/v1/shipping/order/{order_id}", headers=headers, timeout=3)
+                if ship_resp.status_code == 200:
+                    shipping_data = ship_resp.json()
+            except Exception as e:
+                logger.error(f"Failed to fetch shipping info for order {order_id}: {e}")
+                
         return {
             "order_id": order.id,
             "user_id": order.user_id,
@@ -36,7 +46,8 @@ class OrderService:
                     "comment": hist.comment,
                     "changed_at": hist.changed_at
                 } for hist in order.status_history.all()
-            ]
+            ],
+            "shipping": shipping_data
         }
 
     @staticmethod
@@ -177,3 +188,17 @@ class OrderService:
     @staticmethod
     def update_order_status(order_id, status, comment=None):
         return OrderRepository.update_status(order_id, status, comment)
+
+    @staticmethod
+    def list_all_orders():
+        orders = OrderRepository.get_all_orders()
+        return [
+            {
+                "order_id": o.id,
+                "user_id": o.user_id,
+                "total_amount": o.total_amount,
+                "status": o.status,
+                "created_at": o.created_at
+            } for o in orders
+        ]
+

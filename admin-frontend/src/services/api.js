@@ -60,6 +60,11 @@ export const productAPI = {
   list: (params) => api.get('/api/v1/products/', { params }),
   get: (id) => api.get(`/api/v1/products/${id}`),
   create: (data) => api.post('/api/v1/products/', data),
+  update: (id, data) => api.put(`/api/v1/products/${id}`, data),
+  delete: (id) => api.delete(`/api/v1/products/${id}`),
+  uploadImage: (formData) => api.post('/api/v1/products/upload-image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
 };
 
 export const cartAPI = {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ShoppingBag, Minus, Plus, Trash2 } from 'lucide-react';
 import { orderAPI, aiAPI } from '../services/api';
-import { formatPrice } from '../utils/format';
+import { formatPrice, resolveImageUrl } from '../utils/format';
 
 function CartPage({ 
   user, 
@@ -76,7 +76,7 @@ function CartPage({
               <div key={item.id} className="glass p-4 rounded-2xl flex items-center justify-between gap-4">
                 <div className="h-16 w-16 bg-black/40 border border-white/5 rounded-xl flex items-center justify-center text-2xl overflow-hidden shrink-0">
                   {item.product?.image ? (
-                    <img src={item.product.image} alt="" className="h-full w-full object-cover" />
+                    <img src={resolveImageUrl(item.product.image)} alt="" className="h-full w-full object-cover" />
                   ) : (
                     item.product?.product_type === 'BOOK' ? '📚' : item.product?.product_type === 'ELECTRONICS' ? '💻' : '👕'
                   )}

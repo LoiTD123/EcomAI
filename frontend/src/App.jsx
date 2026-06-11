@@ -5,8 +5,10 @@ import { authAPI, productAPI, cartAPI, orderAPI, aiAPI } from './services/api';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ProductDetailModal from './components/ProductDetailModal';
+import OrderDetailModal from './components/OrderDetailModal';
 import AIChatbot from './components/AIChatbot';
 import AIRecommendations from './components/AIRecommendations';
+import ProfileModal from './components/ProfileModal';
 
 // Pages
 import AuthPage from './pages/AuthPage';
@@ -17,6 +19,7 @@ import OrdersPage from './pages/OrdersPage';
 function App() {
   // Authentication states
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   
   // Navigation states
   const [activeTab, setActiveTab] = useState('shop'); // 'shop', 'cart', 'orders'
@@ -38,6 +41,7 @@ function App() {
   const [aiRecommendations, setAiRecommendations] = useState([]);
   
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
 
   // Load cart & orders & recommendations on login
   useEffect(() => {
@@ -109,6 +113,8 @@ function App() {
     try {
       await cartAPI.add({ product_id: productId, quantity });
       loadCart();
+      alert('Đã thêm sản phẩm vào giỏ hàng thành công!');
+      setSelectedProduct(null);
       
       // Log behavior VIEW and ADD_TO_CART to AI Service
       aiAPI.logBehavior({
@@ -177,6 +183,37 @@ function App() {
     }
   };
 
+  const handleViewOrderDetails = async (orderId) => {
+    try {
+      const resp = await orderAPI.get(orderId);
+      const orderData = resp.data;
+      
+      const populatedItems = await Promise.all(
+        orderData.items.map(async (item) => {
+          try {
+            const prodResp = await productAPI.get(item.product_id);
+            return {
+              ...item,
+              product: prodResp.data
+            };
+          } catch {
+            return {
+              ...item,
+              product: { name: `Sản phẩm ID ${item.product_id}` }
+            };
+          }
+        })
+      );
+      
+      setSelectedOrderDetails({
+        ...orderData,
+        items: populatedItems
+      });
+    } catch (err) {
+      alert('Không thể tải chi tiết đơn hàng.');
+    }
+  };
+
   const handleCheckoutSuccess = () => {
     loadCart();
     loadOrders();
@@ -210,93 +247,114 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header 
-        user={user} 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        cartCount={cartDetails.reduce((sum, i) => sum + i.quantity, 0)} 
-        onLogout={handleLogout} 
-      />
-
       {!user ? (
-        <AuthPage onAuthSuccess={setUser} />
+        <>
+          <Header 
+            user={user} 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab} 
+            cartCount={0} 
+            onLogout={handleLogout} 
+            onEditProfile={() => setShowProfileModal(true)}
+          />
+          <AuthPage onAuthSuccess={setUser} />
+        </>
       ) : (
-        <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6">
-          {/* Shop/Cart/Orders Panels (Columns 1 to 8) */}
-          <div className="lg:col-span-8 flex flex-col gap-6">
-            
-            {/* Navigation for Mobile */}
-            <div className="flex md:hidden items-center justify-between glass p-2 rounded-xl">
-              <button 
-                onClick={() => setActiveTab('shop')} 
-                className={`btn flex-1 py-2 ${activeTab === 'shop' ? 'btn-primary' : 'btn-secondary'}`}
-              >
-                Shop
-              </button>
-              <button 
-                onClick={() => setActiveTab('cart')} 
-                className={`btn flex-1 py-2 ${activeTab === 'cart' ? 'btn-primary' : 'btn-secondary'}`}
-              >
-                Giỏ hàng
-              </button>
-              <button 
-                onClick={() => setActiveTab('orders')} 
-                className={`btn flex-1 py-2 ${activeTab === 'orders' ? 'btn-primary' : 'btn-secondary'}`}
-              >
-                Đơn hàng
-              </button>
+        <>
+          <Header 
+            user={user} 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab} 
+            cartCount={cartDetails.reduce((sum, i) => sum + i.quantity, 0)} 
+            onLogout={handleLogout} 
+            onEditProfile={() => setShowProfileModal(true)}
+          />
+          <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6">
+            {/* Shop/Cart/Orders Panels (Columns 1 to 8) */}
+            <div className="lg:col-span-8 flex flex-col gap-6">
+              
+              {/* Navigation for Mobile */}
+              <div className="flex md:hidden items-center justify-between glass p-2 rounded-xl">
+                <button 
+                  onClick={() => setActiveTab('shop')} 
+                  className={`btn flex-1 py-2 ${activeTab === 'shop' ? 'btn-primary' : 'btn-secondary'}`}
+                >
+                  Shop
+                </button>
+                <button 
+                  onClick={() => setActiveTab('cart')} 
+                  className={`btn flex-1 py-2 ${activeTab === 'cart' ? 'btn-primary' : 'btn-secondary'}`}
+                >
+                  Giỏ hàng
+                </button>
+                <button 
+                  onClick={() => setActiveTab('orders')} 
+                  className={`btn flex-1 py-2 ${activeTab === 'orders' ? 'btn-primary' : 'btn-secondary'}`}
+                >
+                  Đơn hàng
+                </button>
+              </div>
+
+              {activeTab === 'shop' && (
+                <ShopPage user={user} onProductClick={handleProductClick} />
+              )}
+
+              {activeTab === 'cart' && (
+                <CartPage 
+                  user={user}
+                  cartDetails={cartDetails}
+                  onUpdateCartQty={handleUpdateCartQty}
+                  onRemoveCartItem={handleRemoveCartItem}
+                  onCheckoutSuccess={handleCheckoutSuccess}
+                  setActiveTab={setActiveTab}
+                />
+              )}
+
+              {activeTab === 'orders' && (
+                <OrdersPage 
+                  orders={orders} 
+                  onDetailClick={handleViewOrderDetails} 
+                />
+              )}
+
             </div>
 
-            {activeTab === 'shop' && (
-              <ShopPage user={user} onProductClick={handleProductClick} />
-            )}
-
-            {activeTab === 'cart' && (
-              <CartPage 
-                user={user}
-                cartDetails={cartDetails}
-                onUpdateCartQty={handleUpdateCartQty}
-                onRemoveCartItem={handleRemoveCartItem}
-                onCheckoutSuccess={handleCheckoutSuccess}
-                setActiveTab={setActiveTab}
+            {/* AI Panel: Chatbot RAG & Recommendations (Columns 9 to 12) */}
+            <div className="lg:col-span-4 flex flex-col gap-6">
+              <AIChatbot 
+                chatMessage={chatMessage}
+                setChatMessage={setChatMessage}
+                chatHistory={chatHistory}
+                chatLoading={chatLoading}
+                onSendMessage={handleSendChatMessage}
               />
-            )}
 
-            {activeTab === 'orders' && (
-              <OrdersPage 
-                orders={orders} 
-                onDetailClick={(orderId) => {
-                  setActiveTab('shop');
-                  handleProductClick(orderId);
-                }} 
+              <AIRecommendations 
+                aiRecommendations={aiRecommendations}
+                onLoadRecommendations={loadAIRecommendations}
+                onProductClick={handleProductClick}
               />
-            )}
-
-          </div>
-
-          {/* AI Panel: Chatbot RAG & Recommendations (Columns 9 to 12) */}
-          <div className="lg:col-span-4 flex flex-col gap-6">
-            <AIChatbot 
-              chatMessage={chatMessage}
-              setChatMessage={setChatMessage}
-              chatHistory={chatHistory}
-              chatLoading={chatLoading}
-              onSendMessage={handleSendChatMessage}
-            />
-
-            <AIRecommendations 
-              aiRecommendations={aiRecommendations}
-              onLoadRecommendations={loadAIRecommendations}
-              onProductClick={handleProductClick}
-            />
-          </div>
-        </main>
+            </div>
+          </main>
+        </>
       )}
 
       <ProductDetailModal 
         selectedProduct={selectedProduct}
         onClose={() => setSelectedProduct(null)}
         onAddToCart={handleAddToCart}
+      />
+
+      <OrderDetailModal 
+        order={selectedOrderDetails}
+        onClose={() => setSelectedOrderDetails(null)}
+      />
+
+      <ProfileModal 
+        isOpen={showProfileModal} 
+        onClose={() => setShowProfileModal(false)} 
+        user={user} 
+        onUpdateSuccess={setUser} 
       />
 
       <Footer />

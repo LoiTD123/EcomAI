@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, RefreshCw, Package } from 'lucide-react';
+import { Search, RefreshCw, Package, ChevronLeft, ChevronRight } from 'lucide-react';
 import { productAPI, aiAPI } from '../services/api';
 import ProductCard from '../components/ProductCard';
 
@@ -7,26 +7,33 @@ function ShopPage({ user, onProductClick }) {
   const [products, setProducts] = useState([]);
   const [typeFilter, setTypeFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeSearchQuery, setActiveSearchQuery] = useState('');
   const [loadingProducts, setLoadingProducts] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Reset page when filter or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [typeFilter, activeSearchQuery]);
 
   useEffect(() => {
     loadProducts();
-  }, [typeFilter]);
+  }, [typeFilter, currentPage, activeSearchQuery]);
 
-  const loadProducts = async (isSearch = false) => {
+  const loadProducts = async () => {
     setLoadingProducts(true);
     try {
-      const params = {};
+      const params = {
+        limit: 9,
+        page: currentPage
+      };
       if (typeFilter) params.product_type = typeFilter;
-      if (searchQuery && isSearch) {
-        params.search = searchQuery;
-        // Log search query to AI Service
-        if (user) {
-          aiAPI.logSearch(searchQuery).catch(() => {});
-        }
-      }
+      if (activeSearchQuery) params.search = activeSearchQuery;
+
       const resp = await productAPI.list(params);
       setProducts(resp.data.results);
+      setTotalCount(resp.data.count);
     } catch (err) {
       console.error(err);
     } finally {
@@ -36,7 +43,10 @@ function ShopPage({ user, onProductClick }) {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    loadProducts(true);
+    setActiveSearchQuery(searchQuery);
+    if (user && searchQuery) {
+      aiAPI.logSearch(searchQuery).catch(() => {});
+    }
   };
 
   return (
@@ -95,15 +105,42 @@ function ShopPage({ user, onProductClick }) {
           <p className="text-text-secondary">Không tìm thấy sản phẩm nào trong kho.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-          {products.map(product => (
-            <ProductCard 
-              key={product.id}
-              product={product}
-              onClick={onProductClick}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            {products.map(product => (
+              <ProductCard 
+                key={product.id}
+                product={product}
+                onClick={onProductClick}
+              />
+            ))}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalCount > 9 && (
+            <div className="flex justify-between items-center glass p-4 rounded-xl mt-6">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="btn btn-secondary py-2 px-4 flex items-center gap-1 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="h-4 w-4" /> Trang trước
+              </button>
+
+              <span className="text-sm text-text-secondary">
+                Trang <strong>{currentPage}</strong> / {Math.ceil(totalCount / 9)}
+              </span>
+
+              <button
+                onClick={() => setCurrentPage(prev => (currentPage * 9 < totalCount ? prev + 1 : prev))}
+                disabled={currentPage * 9 >= totalCount}
+                className="btn btn-secondary py-2 px-4 flex items-center gap-1 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Trang sau <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

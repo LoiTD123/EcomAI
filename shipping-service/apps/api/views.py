@@ -2,7 +2,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from apps.serializers import ShippingCreateSerializer, ShippingTrackingUpdateSerializer, ShippingCompleteSerializer
+from apps.serializers import (
+    ShippingCreateSerializer, 
+    ShippingTrackingUpdateSerializer, 
+    ShippingCompleteSerializer,
+    ShipmentSerializer
+)
 from apps.services import ShippingService
 
 class CreateShippingView(APIView):
@@ -34,6 +39,10 @@ class ShippingTrackingUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        role = request.auth.get('role') if request.auth else None
+        if role not in ['admin', 'staff']:
+            return Response({"error": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+
         serializer = ShippingTrackingUpdateSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -59,6 +68,10 @@ class ShippingCompleteView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        role = request.auth.get('role') if request.auth else None
+        if role not in ['admin', 'staff']:
+            return Response({"error": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+
         serializer = ShippingCompleteSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -79,3 +92,29 @@ class ShippingCompleteView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class ListShippingView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        role = request.auth.get('role') if request.auth else None
+        if role not in ['admin', 'staff']:
+            return Response({"error": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+
+        shipments = ShippingService.list_all_shipments()
+        serializer = ShipmentSerializer(shipments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class GetShippingByOrderView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, order_id):
+        try:
+            from apps.repositories import ShippingRepository
+            shipment = ShippingRepository.get_by_order_id(order_id)
+            serializer = ShipmentSerializer(shipment)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception:
+            return Response({"error": "Shipment not found"}, status=status.HTTP_404_NOT_FOUND)
+
+

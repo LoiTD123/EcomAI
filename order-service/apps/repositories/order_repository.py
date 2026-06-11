@@ -60,3 +60,8 @@ class OrderRepository:
                 return None
             except Exception:
                 return None
+
+    @staticmethod
+    def get_all_orders():
+        return Order.objects.all().order_by('-created_at')
+

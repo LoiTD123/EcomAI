@@ -1,6 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import { formatPrice } from '../utils/format';
+import { formatPrice, resolveImageUrl } from '../utils/format';
 
 function ProductDetailModal({ selectedProduct, onClose, onAddToCart }) {
   if (!selectedProduct) return null;
@@ -19,7 +19,7 @@ function ProductDetailModal({ selectedProduct, onClose, onAddToCart }) {
           {/* Image Column */}
           <div className="h-64 md:h-full min-h-[200px] rounded-2xl bg-black/40 border border-white/5 flex items-center justify-center overflow-hidden relative">
             {selectedProduct.images && selectedProduct.images.length > 0 ? (
-              <img src={selectedProduct.images[0].image_url} alt="" className="h-full w-full object-cover" />
+              <img src={resolveImageUrl(selectedProduct.images[0].image_url)} alt="" className="h-full w-full object-cover" />
             ) : (
               <span className="text-7xl">
                 {selectedProduct.product_type === 'BOOK' ? '📚' : selectedProduct.product_type === 'ELECTRONICS' ? '💻' : '👕'}

@@ -64,3 +64,31 @@ class UserRepository:
     @staticmethod
     def delete_all_user_refresh_tokens(user_id):
         RefreshToken.objects.filter(user_id=user_id).delete()
+
+    @staticmethod
+    def get_all_users():
+        return User.objects.all().order_by('id')
+
+    @staticmethod
+    def update_user_role(user_id, role_name):
+        try:
+            user = User.objects.get(id=user_id)
+            role = Role.objects.get(name=role_name)
+            user.role = role
+            user.save()
+            return user
+        except (User.DoesNotExist, Role.DoesNotExist):
+            return None
+
+    @staticmethod
+    def update_profile(user, email, first_name=None, last_name=None, password=None):
+        user.email = email
+        if first_name is not None:
+            user.first_name = first_name
+        if last_name is not None:
+            user.last_name = last_name
+        if password:
+            user.set_password(password)
+        user.save()
+        return user
+

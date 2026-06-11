@@ -41,6 +41,16 @@ class Command(BaseCommand):
             ])
             self.stdout.write('Created role: customer')
 
+        # Staff Role
+        staff_role, created = Role.objects.get_or_create(name='staff', defaults={'description': 'Shop Staff'})
+        if created:
+            staff_role.permissions.set([
+                db_perms['view_product'],
+                db_perms['create_product'],
+                db_perms['update_shipping']
+            ])
+            self.stdout.write('Created role: staff')
+
         # 3. Create Sample Users
         self.stdout.write('Creating sample users...')
         
@@ -79,5 +89,77 @@ class Command(BaseCommand):
                 last_name='Tran'
             )
             self.stdout.write('Created user: customer2 (password: CustomerPassword123!)')
+
+        # Customer 3 User
+        if not User.objects.filter(username='customer3').exists():
+            cust3 = User.objects.create_user(
+                username='customer3',
+                email='customer3@ecom.com',
+                password='CustomerPassword123!',
+                role=customer_role,
+                first_name='Minh',
+                last_name='Le'
+            )
+            self.stdout.write('Created user: customer3 (password: CustomerPassword123!)')
+
+        # Customer 4 User
+        if not User.objects.filter(username='customer4').exists():
+            cust4 = User.objects.create_user(
+                username='customer4',
+                email='customer4@ecom.com',
+                password='CustomerPassword123!',
+                role=customer_role,
+                first_name='Dung',
+                last_name='Vu'
+            )
+            self.stdout.write('Created user: customer4 (password: CustomerPassword123!)')
+
+        # Customer 5 User
+        if not User.objects.filter(username='customer5').exists():
+            cust5 = User.objects.create_user(
+                username='customer5',
+                email='customer5@ecom.com',
+                password='CustomerPassword123!',
+                role=customer_role,
+                first_name='Vy',
+                last_name='Pham'
+            )
+            self.stdout.write('Created user: customer5 (password: CustomerPassword123!)')
+
+        # Staff 1 User
+        if not User.objects.filter(username='staff1').exists():
+            staff1 = User.objects.create_user(
+                username='staff1',
+                email='staff1@ecom.com',
+                password='StaffPassword123!',
+                role=staff_role,
+                first_name='Shop',
+                last_name='Staff'
+            )
+            self.stdout.write('Created user: staff1 (password: StaffPassword123!)')
+
+        # Staff 2 User
+        if not User.objects.filter(username='staff2').exists():
+            staff2 = User.objects.create_user(
+                username='staff2',
+                email='staff2@ecom.com',
+                password='StaffPassword123!',
+                role=staff_role,
+                first_name='Hao',
+                last_name='Nguyen'
+            )
+            self.stdout.write('Created user: staff2 (password: StaffPassword123!)')
+
+        # Staff 3 User
+        if not User.objects.filter(username='staff3').exists():
+            staff3 = User.objects.create_user(
+                username='staff3',
+                email='staff3@ecom.com',
+                password='StaffPassword123!',
+                role=staff_role,
+                first_name='Kiet',
+                last_name='Lam'
+            )
+            self.stdout.write('Created user: staff3 (password: StaffPassword123!)')
             
         self.stdout.write(self.style.SUCCESS('Successfully seeded User service database!'))

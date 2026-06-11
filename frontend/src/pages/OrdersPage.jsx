@@ -34,9 +34,11 @@ function OrdersPage({ orders, onDetailClick }) {
               <div className="flex items-center gap-3 self-stretch sm:self-auto justify-between border-t border-white/5 sm:border-0 pt-3 sm:pt-0">
                 <span className={`text-xs font-bold px-3 py-1 rounded-full border ${
                   order.status === 'PENDING' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                  order.status === 'CONFIRMED' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
+                  order.status === 'SHIPPING' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
                   order.status === 'DELIVERED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                   order.status === 'CANCELLED' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                  'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+                  'bg-gray-500/10 text-gray-400 border-gray-500/20'
                 }`}>
                   {order.status}
                 </span>

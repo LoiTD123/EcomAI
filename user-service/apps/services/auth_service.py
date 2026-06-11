@@ -30,6 +30,14 @@ class AuthService:
 
         # Generate JWT Tokens
         jwt_token = JWTRefreshToken.for_user(user)
+        
+        # Add custom claims to tokens
+        role_name = user.role.name if user.role else 'customer'
+        jwt_token['role'] = role_name
+        jwt_token['username'] = user.username
+        jwt_token.access_token['role'] = role_name
+        jwt_token.access_token['username'] = user.username
+
         access_token = str(jwt_token.access_token)
         refresh_token = str(jwt_token)
 
@@ -47,7 +55,7 @@ class AuthService:
                 "id": user.id,
                 "username": user.username,
                 "email": user.email,
-                "role": user.role.name if user.role else 'customer'
+                "role": role_name
             }
         }
 
@@ -63,8 +71,15 @@ class AuthService:
         try:
             # Decode using SimpleJWT to verify signature and expiry
             jwt_token = JWTRefreshToken(refresh_token_str)
-            new_access_token = str(jwt_token.access_token)
-            return {"access": new_access_token}
+            
+            user = db_token.user
+            role_name = user.role.name if user.role else 'customer'
+            
+            access_token = jwt_token.access_token
+            access_token['role'] = role_name
+            access_token['username'] = user.username
+            
+            return {"access": str(access_token)}
         except Exception:
             UserRepository.delete_refresh_token(refresh_token_str)
             raise ValueError("Invalid refresh token signature")

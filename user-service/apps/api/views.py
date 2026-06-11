@@ -7,9 +7,11 @@ from apps.serializers import (
     RegisterRequestSerializer,
     LoginRequestSerializer,
     RefreshRequestSerializer,
-    UserResponseSerializer
+    UserResponseSerializer,
+    ProfileUpdateRequestSerializer
 )
 from apps.services import AuthService
+from apps.repositories import UserRepository
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -93,6 +95,27 @@ class ProfileView(APIView):
         serializer = UserResponseSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def put(self, request):
+        serializer = ProfileUpdateRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        email = serializer.validated_data['email']
+        existing_user = UserRepository.get_by_email(email)
+        if existing_user and existing_user.id != request.user.id:
+            return Response({"error": "Email is already taken by another user"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        updated_user = UserRepository.update_profile(
+            user=request.user,
+            email=email,
+            first_name=serializer.validated_data.get('first_name'),
+            last_name=serializer.validated_data.get('last_name'),
+            password=serializer.validated_data.get('password')
+        )
+        
+        response_serializer = UserResponseSerializer(updated_user)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
 class VerifyTokenView(APIView):
     """
     Internal API endpoint used by Nginx or other microservices to verify an access token.
@@ -125,3 +148,53 @@ class VerifyTokenView(APIView):
             }, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": "Invalid or expired token"}, status=status.HTTP_401_UNAUTHORIZED)
+
+class UserManagementView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        role = request.auth.get('role') if request.auth else (request.user.role.name if (hasattr(request.user, 'role') and request.user.role) else 'customer')
+        if role != 'admin':
+            return Response({"error": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+            
+        users = UserRepository.get_all_users()
+        data = [
+            {
+                "id": u.id,
+                "username": u.username,
+                "email": u.email,
+                "role": u.role.name if u.role else 'customer',
+                "is_active": u.is_active
+            } for u in users
+        ]
+        return Response(data, status=status.HTTP_200_OK)
+
+    def put(self, request):
+        role = request.auth.get('role') if request.auth else (request.user.role.name if (hasattr(request.user, 'role') and request.user.role) else 'customer')
+        if role != 'admin':
+            return Response({"error": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+
+        user_id = request.data.get('user_id')
+        new_role = request.data.get('role')
+        if not user_id or not new_role:
+            return Response({"error": "user_id and role are required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if new_role not in ['admin', 'staff', 'customer']:
+            return Response({"error": "Invalid role"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if int(user_id) == request.user.id and new_role != 'admin':
+            return Response({"error": "You cannot change your own admin role"}, status=status.HTTP_400_BAD_REQUEST)
+
+        updated_user = UserRepository.update_user_role(user_id, new_role)
+        if not updated_user:
+            return Response({"error": "User or Role not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        UserRepository.delete_all_user_refresh_tokens(user_id)
+
+        return Response({
+            "message": "User role updated successfully",
+            "user_id": updated_user.id,
+            "username": updated_user.username,
+            "role": updated_user.role.name if updated_user.role else 'customer'
+        }, status=status.HTTP_200_OK)
+

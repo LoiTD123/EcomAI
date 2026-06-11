@@ -77,3 +77,8 @@ class ShippingService:
             logger.error(f"Error calling Order Service for order {shipment.order_id}: {order_err}")
 
         return shipment
+
+    @staticmethod
+    def list_all_shipments():
+        return ShippingRepository.get_all_shipments()
+

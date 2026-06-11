@@ -66,3 +66,8 @@ class ShippingRepository:
                 log_content=f"Location: {location} - Status: {status} - Description: {description}"
             )
             return update
+
+    @staticmethod
+    def get_all_shipments():
+        return Shipment.objects.prefetch_related('tracking_updates', 'logs').all().order_by('-created_at')
+

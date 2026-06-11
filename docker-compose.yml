@@ -16,7 +16,7 @@ services:
     networks:
       - ecom_network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -36,7 +36,7 @@ services:
     networks:
       - ecom_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -55,7 +55,7 @@ services:
     networks:
       - ecom_network
     healthcheck:
-      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "password", "RETURN 1"]
+      test: [ "CMD", "cypher-shell", "-u", "neo4j", "-p", "password", "RETURN 1" ]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -75,6 +75,7 @@ services:
       - shipping-service
       - ai-service
       - frontend
+      - admin-frontend
     networks:
       - ecom_network
 
@@ -115,6 +116,8 @@ services:
         condition: service_healthy
       ai-service:
         condition: service_started
+    volumes:
+      - product_media:/app/media
     command: sh -c "python manage.py makemigrations apps && python manage.py migrate && python manage.py seed_data && python manage.py runserver 0.0.0.0:8000"
     networks:
       - ecom_network
@@ -229,12 +232,23 @@ services:
     networks:
       - ecom_network
 
-  # Frontend App (React)
+  # Frontend App (React Customer)
   frontend:
     build: ./frontend
     container_name: react-frontend
     ports:
       - "3000:3000"
+    environment:
+      - VITE_GATEWAY_URL=http://localhost:8082
+    networks:
+      - ecom_network
+
+  # Frontend App (React Admin Dashboard)
+  admin-frontend:
+    build: ./admin-frontend
+    container_name: admin-frontend
+    ports:
+      - "3001:3000"
     environment:
       - VITE_GATEWAY_URL=http://localhost:8082
     networks:
@@ -249,3 +263,4 @@ volumes:
   postgres_data:
   neo4j_data:
   ai_data:
+  product_media:

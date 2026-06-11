@@ -117,3 +117,75 @@ class ProductRepository:
                 return True
             except Product.DoesNotExist:
                 return False
+
+    @staticmethod
+    def update_product(product_id, category_id, name, slug, price, stock, description, product_type, details, images=None):
+        category = Category.objects.get(id=category_id)
+        
+        with transaction.atomic():
+            try:
+                product = Product.objects.select_for_update().get(id=product_id)
+            except Product.DoesNotExist:
+                raise ValueError("Product not found")
+
+            product.category = category
+            product.name = name
+            product.slug = slug
+            product.price = price
+            product.stock = stock
+            product.description = description
+            product.save()
+
+            # Update type-specific details
+            if product_type == 'BOOK':
+                BookProduct.objects.update_or_create(
+                    product=product,
+                    defaults={
+                        'author': details.get('author'),
+                        'publisher': details.get('publisher'),
+                        'publication_year': details.get('publication_year'),
+                        'isbn': details.get('isbn'),
+                        'pages': details.get('pages')
+                    }
+                )
+            elif product_type == 'ELECTRONICS':
+                ElectronicsProduct.objects.update_or_create(
+                    product=product,
+                    defaults={
+                        'brand': details.get('brand'),
+                        'model': details.get('model'),
+                        'warranty_months': details.get('warranty_months', 0),
+                        'specifications': details.get('specifications')
+                    }
+                )
+            elif product_type == 'FASHION':
+                FashionProduct.objects.update_or_create(
+                    product=product,
+                    defaults={
+                        'brand': details.get('brand'),
+                        'material': details.get('material'),
+                        'size': details.get('size'),
+                        'color': details.get('color')
+                    }
+                )
+
+            # Update images: delete old and write new ones
+            if images is not None:
+                ProductImage.objects.filter(product=product).delete()
+                for img in images:
+                    ProductImage.objects.create(
+                        product=product,
+                        image_url=img.get('image_url'),
+                        is_primary=img.get('is_primary', False)
+                    )
+            return product
+
+    @staticmethod
+    def delete_product(product_id):
+        with transaction.atomic():
+            try:
+                product = Product.objects.select_for_update().get(id=product_id)
+                product.delete()
+                return True
+            except Product.DoesNotExist:
+                return False

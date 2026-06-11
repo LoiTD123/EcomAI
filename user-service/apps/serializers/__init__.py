@@ -2,5 +2,6 @@ from .serializers import (
     RegisterRequestSerializer,
     LoginRequestSerializer,
     RefreshRequestSerializer,
-    UserResponseSerializer
+    UserResponseSerializer,
+    ProfileUpdateRequestSerializer
 )
