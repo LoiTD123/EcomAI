@@ -3,15 +3,15 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from apps.serializers import (
+from ..serializers import (
     RegisterRequestSerializer,
     LoginRequestSerializer,
     RefreshRequestSerializer,
     UserResponseSerializer,
     ProfileUpdateRequestSerializer
 )
-from apps.services import AuthService
-from apps.repositories import UserRepository
+from ..services import AuthService
+from ..repositories import UserRepository
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]

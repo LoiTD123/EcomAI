@@ -1,4 +1,4 @@
-from apps.repositories import PaymentRepository
+from ..repositories import PaymentRepository
 import requests
 import os
 import logging

@@ -1,4 +1,4 @@
-from apps.models import Payment, PaymentTransaction, PaymentLog
+from ..models import Payment, PaymentTransaction, PaymentLog
 from django.db import transaction
 
 class PaymentRepository:

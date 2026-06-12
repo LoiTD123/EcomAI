@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from apps.models import Product
+from ...models import Product
 import requests
 import os
 

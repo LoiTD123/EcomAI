@@ -2,8 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated, BasePermission
-from apps.serializers import ProductCreateSerializer, StockUpdateSerializer
-from apps.services import ProductService
+from ..serializers import ProductCreateSerializer, StockUpdateSerializer
+from ..services import ProductService
 import os
 import uuid
 from django.core.files.storage import default_storage

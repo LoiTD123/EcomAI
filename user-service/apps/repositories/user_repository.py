@@ -1,4 +1,4 @@
-from apps.models import User, Role, Permission, RefreshToken
+from ..models import User, Role, Permission, RefreshToken
 from django.db import transaction
 
 class UserRepository:

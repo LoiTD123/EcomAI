@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from apps.models import Role, Permission, User
+from ...models import Role, Permission, User
 
 class Command(BaseCommand):
     help = 'Seeds initial roles, permissions and sample users.'

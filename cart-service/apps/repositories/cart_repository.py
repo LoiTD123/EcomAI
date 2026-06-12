@@ -1,4 +1,4 @@
-from apps.models import Cart, CartItem
+from ..models import Cart, CartItem
 from django.db import transaction
 
 class CartRepository:

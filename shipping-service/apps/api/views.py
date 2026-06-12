@@ -2,13 +2,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from apps.serializers import (
+from ..serializers import (
     ShippingCreateSerializer, 
     ShippingTrackingUpdateSerializer, 
     ShippingCompleteSerializer,
     ShipmentSerializer
 )
-from apps.services import ShippingService
+from ..services import ShippingService
 
 class CreateShippingView(APIView):
     permission_classes = [IsAuthenticated]
@@ -110,7 +110,7 @@ class GetShippingByOrderView(APIView):
 
     def get(self, request, order_id):
         try:
-            from apps.repositories import ShippingRepository
+            from ..repositories import ShippingRepository
             shipment = ShippingRepository.get_by_order_id(order_id)
             serializer = ShipmentSerializer(shipment)
             return Response(serializer.data, status=status.HTTP_200_OK)

@@ -1,4 +1,4 @@
-from apps.models import Order, OrderItem, OrderStatusHistory
+from ..models import Order, OrderItem, OrderStatusHistory
 from django.db import transaction
 
 class OrderRepository:

@@ -2,8 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from apps.serializers import PaymentCreateSerializer, PaymentPaySerializer
-from apps.services import PaymentService
+from ..serializers import PaymentCreateSerializer, PaymentPaySerializer
+from ..services import PaymentService
 
 class CreatePaymentView(APIView):
     permission_classes = [IsAuthenticated]

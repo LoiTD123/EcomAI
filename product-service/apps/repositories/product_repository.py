@@ -1,4 +1,4 @@
-from apps.models import Category, Product, BookProduct, ElectronicsProduct, FashionProduct, ProductImage
+from ..models import Category, Product, BookProduct, ElectronicsProduct, FashionProduct, ProductImage
 from django.db import transaction
 from django.db.models import Q
 

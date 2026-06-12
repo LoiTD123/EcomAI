@@ -1,4 +1,4 @@
-from apps.repositories import ProductRepository
+from ..repositories import ProductRepository
 
 class ProductService:
     @staticmethod

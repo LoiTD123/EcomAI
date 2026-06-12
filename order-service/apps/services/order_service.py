@@ -21,7 +21,13 @@ class OrderService:
         if token:
             try:
                 headers = {"Authorization": token}
-                ship_resp = requests.get(f"{SHIPPING_SERVICE_URL}/api/v1/shipping/order/{order_id}", headers=headers, timeout=3)
+                from ..breakers import shipping_breaker
+                ship_resp = shipping_breaker.call(
+                    requests.get,
+                    f"{SHIPPING_SERVICE_URL}/api/v1/shipping/order/{order_id}",
+                    headers=headers,
+                    timeout=3
+                )
                 if ship_resp.status_code == 200:
                     shipping_data = ship_resp.json()
             except Exception as e:
@@ -68,14 +74,21 @@ class OrderService:
         
         # 1. Fetch Cart Items
         try:
-            cart_resp = requests.get(f"{CART_SERVICE_URL}/api/v1/cart/", headers=headers, timeout=5)
+            from ..breakers import cart_breaker
+            cart_resp = cart_breaker.call(
+                requests.get,
+                f"{CART_SERVICE_URL}/api/v1/cart/",
+                headers=headers,
+                timeout=5
+            )
             if cart_resp.status_code != 200:
                 raise ValueError("Could not retrieve cart items")
             cart_data = cart_resp.json()
             cart_items = cart_data.get('items', [])
             if not cart_items:
                 raise ValueError("Cart is empty")
-        except requests.exceptions.RequestException:
+        except Exception as e:
+            logger.error(f"Cart service call failed or breaker open: {e}")
             raise RuntimeError("Cart service is unavailable")
 
         # 2. Fetch Product prices and check stock, prepare order details
@@ -84,12 +97,18 @@ class OrderService:
         total_amount = 0
         
         try:
+            from ..breakers import product_breaker
             for item in cart_items:
                 product_id = item['product_id']
                 quantity = item['quantity']
                 
                 # Fetch product details
-                prod_resp = requests.get(f"{PRODUCT_SERVICE_URL}/api/v1/products/{product_id}", headers=headers, timeout=5)
+                prod_resp = product_breaker.call(
+                    requests.get,
+                    f"{PRODUCT_SERVICE_URL}/api/v1/products/{product_id}",
+                    headers=headers,
+                    timeout=5
+                )
                 if prod_resp.status_code != 200:
                     raise ValueError(f"Product ID {product_id} no longer exists")
                     
@@ -112,7 +131,8 @@ class OrderService:
                 pid = item['product_id']
                 qty = item['quantity']
                 
-                stock_resp = requests.post(
+                stock_resp = product_breaker.call(
+                    requests.post,
                     f"{PRODUCT_SERVICE_URL}/api/v1/products/{pid}/stock",
                     json={"quantity_change": -qty},
                     headers=headers,
@@ -126,9 +146,11 @@ class OrderService:
                     
         except Exception as e:
             # Rollback reserved stocks
+            from ..breakers import product_breaker
             for res in reserved_stocks:
                 try:
-                    requests.post(
+                    product_breaker.call(
+                        requests.post,
                         f"{PRODUCT_SERVICE_URL}/api/v1/products/{res['product_id']}/stock",
                         json={"quantity_change": res['quantity']},
                         headers=headers,
@@ -159,11 +181,12 @@ class OrderService:
             # Fallback to sync calling if Celery fails to enqueue
             logger.info("Running post-order tasks synchronously as fallback...")
             try:
-                requests.post(f"{PAYMENT_SERVICE_URL}/api/v1/payments/create", json={"order_id": order.id, "amount": float(total_amount), "payment_method": "COD"}, headers=headers, timeout=5)
-                requests.post(f"{SHIPPING_SERVICE_URL}/api/v1/shipping/create", json={"order_id": order.id, "shipping_address": shipping_address, "recipient_name": recipient_name, "recipient_phone": recipient_phone, "carrier": "Giao Hàng Tiết Kiệm"}, headers=headers, timeout=5)
-                requests.post(f"{CART_SERVICE_URL}/api/v1/cart/clear", headers=headers, timeout=5)
+                from ..breakers import payment_breaker, shipping_breaker, cart_breaker
+                payment_breaker.call(requests.post, f"{PAYMENT_SERVICE_URL}/api/v1/payments/create", json={"order_id": order.id, "amount": float(total_amount), "payment_method": "COD"}, headers=headers, timeout=5)
+                shipping_breaker.call(requests.post, f"{SHIPPING_SERVICE_URL}/api/v1/shipping/create", json={"order_id": order.id, "shipping_address": shipping_address, "recipient_name": recipient_name, "recipient_phone": recipient_phone, "carrier": "Giao Hàng Tiết Kiệm"}, headers=headers, timeout=5)
+                cart_breaker.call(requests.post, f"{CART_SERVICE_URL}/api/v1/cart/clear", headers=headers, timeout=5)
             except Exception as sync_err:
-                logger.error(f"Fallback sync post-order tasks failed: {sync_err}")
+                logger.error(f"Fallback sync post-order tasks failed or breaker open: {sync_err}")
 
         return order
 

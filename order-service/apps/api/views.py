@@ -2,8 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from apps.serializers import OrderCreateSerializer, OrderStatusUpdateSerializer
-from apps.services import OrderService
+from ..serializers import OrderCreateSerializer, OrderStatusUpdateSerializer
+from ..services import OrderService
 
 class OrderListCreateView(APIView):
     permission_classes = [IsAuthenticated]

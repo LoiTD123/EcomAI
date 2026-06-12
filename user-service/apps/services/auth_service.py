@@ -1,4 +1,4 @@
-from apps.repositories import UserRepository
+from ..repositories import UserRepository
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken as JWTRefreshToken
 from django.utils import timezone

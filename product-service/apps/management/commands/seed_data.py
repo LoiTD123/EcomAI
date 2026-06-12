@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from apps.models import Category, Product, BookProduct, ElectronicsProduct, FashionProduct, ProductImage
+from ...models import Category, Product, BookProduct, ElectronicsProduct, FashionProduct, ProductImage
 from django.db import transaction
 import requests
 import os

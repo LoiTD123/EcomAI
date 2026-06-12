@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.models import Shipment, ShipmentTracking
+from ..models import Shipment, ShipmentTracking
 
 class ShippingCreateSerializer(serializers.Serializer):
     order_id = serializers.IntegerField()

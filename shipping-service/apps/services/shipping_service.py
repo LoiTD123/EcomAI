@@ -1,4 +1,4 @@
-from apps.repositories import ShippingRepository
+from ..repositories import ShippingRepository
 import requests
 import os
 import logging

@@ -1,4 +1,4 @@
-from apps.models import Shipment, ShipmentTracking, DeliveryLog
+from ..models import Shipment, ShipmentTracking, DeliveryLog
 from django.db import transaction
 import random
 import string

@@ -1,4 +1,4 @@
-from apps.repositories import CartRepository
+from ..repositories import CartRepository
 import requests
 import os
 
