@@ -1,4 +1,4 @@
-from apps.repositories import OrderRepository
+from ..repositories import OrderRepository
 import requests
 import os
 import logging
@@ -141,47 +141,29 @@ class OrderService:
         # 4. Create Order in DB
         order = OrderRepository.create_order(user_id, total_amount, items_to_create)
         
-        # 5. Create Payment record (COD)
+        # 5. Trigger Asynchronous Background Tasks via Celery (Payment, Shipping, Clear Cart)
         try:
-            pay_resp = requests.post(
-                f"{PAYMENT_SERVICE_URL}/api/v1/payments/create",
-                json={
-                    "order_id": order.id,
-                    "amount": total_amount,
-                    "payment_method": "COD"
-                },
-                headers=headers,
-                timeout=5
+            from ..tasks import post_order_creation_tasks
+            post_order_creation_tasks.delay(
+                order_id=order.id,
+                total_amount=float(total_amount),
+                shipping_address=shipping_address,
+                recipient_name=recipient_name,
+                recipient_phone=recipient_phone,
+                user_id=user_id,
+                token=token
             )
-            if pay_resp.status_code != 201:
-                logger.warning(f"Payment service failed to create record for order {order.id}")
-        except Exception as pay_err:
-            logger.error(f"Error calling Payment Service for order {order.id}: {pay_err}")
-
-        # 6. Create Shipping record (Vận đơn)
-        try:
-            ship_resp = requests.post(
-                f"{SHIPPING_SERVICE_URL}/api/v1/shipping/create",
-                json={
-                    "order_id": order.id,
-                    "shipping_address": shipping_address,
-                    "recipient_name": recipient_name,
-                    "recipient_phone": recipient_phone,
-                    "carrier": "Giao Hàng Tiết Kiệm"
-                },
-                headers=headers,
-                timeout=5
-            )
-            if ship_resp.status_code != 201:
-                logger.warning(f"Shipping service failed to create record for order {order.id}")
-        except Exception as ship_err:
-            logger.error(f"Error calling Shipping Service for order {order.id}: {ship_err}")
-
-        # 7. Clear Cart
-        try:
-            requests.post(f"{CART_SERVICE_URL}/api/v1/cart/clear", headers=headers, timeout=5)
-        except Exception as cart_err:
-            logger.error(f"Failed to clear cart for user {user_id}: {cart_err}")
+            logger.info(f"Delegated post-order tasks to Celery for Order ID: {order.id}")
+        except Exception as celery_err:
+            logger.error(f"Failed to delegate tasks to Celery for Order ID {order.id}: {celery_err}")
+            # Fallback to sync calling if Celery fails to enqueue
+            logger.info("Running post-order tasks synchronously as fallback...")
+            try:
+                requests.post(f"{PAYMENT_SERVICE_URL}/api/v1/payments/create", json={"order_id": order.id, "amount": float(total_amount), "payment_method": "COD"}, headers=headers, timeout=5)
+                requests.post(f"{SHIPPING_SERVICE_URL}/api/v1/shipping/create", json={"order_id": order.id, "shipping_address": shipping_address, "recipient_name": recipient_name, "recipient_phone": recipient_phone, "carrier": "Giao Hàng Tiết Kiệm"}, headers=headers, timeout=5)
+                requests.post(f"{CART_SERVICE_URL}/api/v1/cart/clear", headers=headers, timeout=5)
+            except Exception as sync_err:
+                logger.error(f"Fallback sync post-order tasks failed: {sync_err}")
 
         return order
 

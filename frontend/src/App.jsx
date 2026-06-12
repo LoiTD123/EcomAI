@@ -33,7 +33,7 @@ function App() {
   const [orders, setOrders] = useState([]);
 
   // AI & Chatbot states
-  const [chatSessionId] = useState(`session_${Math.random().toString(36).substring(2, 9)}`);
+  const [chatSessionId, setChatSessionId] = useState(`session_${Math.random().toString(36).substring(2, 9)}`);
   const [chatMessage, setChatMessage] = useState('');
   const [chatHistory, setChatHistory] = useState([
     { role: 'model', message: 'Xin chào! Tôi là trợ lý mua sắm AI. Tôi có thể giúp bạn tìm kiếm sách, đồ điện tử hoặc quần áo thời trang. Bạn cần tư vấn gì hôm nay?' }
@@ -54,6 +54,11 @@ function App() {
     }
   }, [user]);
 
+  // Hide chatbot when switching tabs
+  useEffect(() => {
+    setIsChatOpen(false);
+  }, [activeTab]);
+
   const handleLogout = () => {
     const refresh = localStorage.getItem('refresh_token');
     if (refresh) {
@@ -67,6 +72,12 @@ function App() {
     setCartDetails([]);
     setOrders([]);
     setAiRecommendations([]);
+    // Reset chat history and chatbot widget state
+    setChatHistory([
+      { role: 'model', message: 'Xin chào! Tôi là trợ lý mua sắm AI. Tôi có thể giúp bạn tìm kiếm sách, đồ điện tử hoặc quần áo thời trang. Bạn cần tư vấn gì hôm nay?' }
+    ]);
+    setChatSessionId(`session_${Math.random().toString(36).substring(2, 9)}`);
+    setIsChatOpen(false);
   };
 
   const loadCart = async () => {
