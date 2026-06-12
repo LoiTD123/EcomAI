@@ -1,6 +1,6 @@
 # Hệ Thống E-Commerce Microservices Tích Hợp Trí Tuệ Nhân Tạo (EcomAI)
 
-Chào mừng bạn đến với **EcomAI** — Hệ thống thương mại điện tử hoàn chỉnh được thiết kế theo kiến trúc **Microservices & Domain-Driven Design (DDD)**, kết hợp **Hệ thống gợi ý lai (Hybrid Recommendation)** và **Trợ lý mua sắm RAG Chatbot**. 
+Chào mừng bạn đến với **EcomAI** — Hệ thống thương mại điện tử hoàn chỉnh được thiết kế theo kiến trúc **Microservices & Domain-Driven Design (DDD)**, kết hợp **Hệ thống gợi ý lai (Hybrid Recommendation)**, **Trợ lý mua sắm RAG Chatbot**, cùng hệ thống hàng đợi công việc nền, quản lý log và giám sát hiệu năng tập trung.
 
 Dự án này được xây dựng từ số không (from zero), đóng gói khép kín hoàn toàn qua **Docker Compose** phục vụ cho tiểu luận môn học **Kiến trúc và Thiết kế Phần mềm**.
 
@@ -8,7 +8,7 @@ Dự án này được xây dựng từ số không (from zero), đóng gói kh�
 
 ## 📐 Kiến Trúc Hệ Thống (System Architecture)
 
-Hệ thống bao gồm **10 container** được điều phối qua một **Nginx Gateway** đóng vai trò Reverse Proxy điều hướng duy nhất.
+Hệ thống bao gồm **23 container** được điều phối qua một **Nginx Gateway** đóng vai trò điều hướng duy nhất và hệ thống mạng nội bộ Docker.
 
 ```mermaid
 graph TD
@@ -28,6 +28,14 @@ graph TD
         Gateway -->|/api/v1/shipping| ShippingService[Shipping Service]
     end
 
+    subgraph BackgroundQueue ["Background Task Queue (Celery + Redis)"]
+        OrderService -->|Push tasks| RedisBroker[(Redis Broker - Port 6379)]
+        CeleryWorker[Celery Worker] -->|Poll & Execute| RedisBroker
+        CeleryWorker -->|Sync Call| PaymentService
+        CeleryWorker -->|Sync Call| ShippingService
+        CeleryWorker -->|Sync Call| CartService
+    end
+
     subgraph AIEngine ["AI Engine (FastAPI)"]
         Gateway -->|/api/v1/ai| AIService[AI Service]
         AIService -->|Predict Next Product| LSTM[LSTM Model PyTorch]
@@ -36,9 +44,22 @@ graph TD
         AIService -->|Embeddings & RAG| Gemini[Gemini 2.5 Flash API]
     end
 
+    subgraph LoggingStack ["Centralized Logging (ELK Stack)"]
+        Filebeat[Filebeat Agent] -->|Collect container logs| Elasticsearch[(Elasticsearch - Port 9200)]
+        Kibana[Kibana Dashboard - Port 5601] -->|Query logs| Elasticsearch
+    end
+
+    subgraph MonitoringStack ["Monitoring & Metrics (Prometheus + Grafana)"]
+        Prometheus[Prometheus - Port 9090] -->|Scrape metrics| NodeExporter[Node Exporter - Port 9100]
+        Prometheus -->|Scrape metrics| cAdvisor[cAdvisor - Port 8083]
+        Prometheus -->|Scrape metrics| NginxExporter[Nginx Exporter - Port 9113]
+        NginxExporter -->|Scrape stub status| Gateway
+        Grafana[Grafana Dashboard - Port 3003] -->|Visualize metrics| Prometheus
+    end
+
     subgraph DBs ["Databases"]
         UserService & CartService & OrderService & PaymentService & ShippingService --->|Relational| MySQL[(MySQL DB - Port 3307)]
-        ProductService --->|Relational| PostgreSQL[(PostgreSQL DB - Port 5432)]
+        ProductService --->|Relational| PostgreSQL[(PostgreSQL DB - Port 5433)]
     end
 ```
 
@@ -48,30 +69,50 @@ graph TD
 
 | Thành phần | Công nghệ / Thư viện chính | Vai trò | CSDL / Lưu trữ |
 | :--- | :--- | :--- | :--- |
-| **Gateway** | Nginx | Reverse Proxy & API Gateway điều phối | - |
+| **Gateway** | Nginx | Reverse Proxy & API Gateway điều phối, Stub Status | - |
 | **User Service** | Django REST Framework, SimpleJWT | Quản lý người dùng, hồ sơ, xác thực JWT | MySQL (`user_db`) |
 | **Product Service** | Django REST Framework, Django ORM | Quản lý danh mục, sản phẩm, tồn kho | PostgreSQL (`product_db`) |
 | **Cart Service** | Django REST Framework | Quản lý giỏ hàng & sản phẩm đã chọn | MySQL (`cart_db`) |
-| **Order Service** | Django REST Framework | Tạo đơn hàng, kiểm tra tồn kho, quản lý trạng thái | MySQL (`order_db`) |
+| **Order Service** | Django REST Framework, Celery | Tạo đơn hàng, kiểm tra tồn kho, gửi tác vụ nền | MySQL (`order_db`) |
 | **Payment Service** | Django REST Framework | Xử lý thanh toán giả lập và ghi nhận hóa đơn | MySQL (`payment_db`) |
 | **Shipping Service** | Django REST Framework | Tạo vận đơn, quản lý hành trình vận chuyển | MySQL (`shipping_db`) |
+| **Celery Broker** | Redis | Hàng đợi tin nhắn/broker truyền tác vụ nền cho Celery | Redis Memory |
 | **AI Service** | FastAPI, PyTorch, FAISS, Neo4j Driver | Tính toán gợi ý lai, quản lý chatbot RAG | SQLite (`ai_logs.db`) |
 | **Frontend Client** | ReactJS, Vite, Tailwind CSS, Outfit Font | Trang mua sắm, hiển thị gợi ý, Widget Chatbot | LocalStorage |
 | **Frontend Admin** | ReactJS, Vite, Tailwind CSS, Outfit Font | Trang quản trị, quản lý kho, duyệt đơn, phân quyền | LocalStorage |
+| **Logging Agent** | Filebeat (Elastic) | Thu thập logs của toàn bộ container chạy trên host | - |
+| **Log Storage** | Elasticsearch & Kibana | Lưu trữ chỉ mục logs và hiển thị bảng điều khiển | Elasticsearch Index |
+| **Monitoring** | Prometheus & Grafana | Thu thập các chỉ số CPU/RAM/Network và trực quan hóa | Prometheus TSDB |
+| **Exporters** | cAdvisor, Node Exporter, Nginx Exporter | Thu thập metrics từ Containers, Host OS và Gateway | - |
 
 ---
 
 ## 🔌 Cổng Dịch Vụ Mặc Định (Port Mapping)
 
-Khi hệ thống khởi chạy, các cổng sau sẽ được ánh xạ ra máy chủ vật lý (Host):
+Khi hệ thống khởi chạy, các cổng sau sẽ được ánh xạ ra máy chủ vật lý (Host) để bạn truy cập:
 
+### Giao diện & APIs chính:
 * **Nginx Gateway (Điểm truy cập chung)**: `http://localhost:8082`
 * **Giao diện Khách hàng (User Store)**: `http://localhost:3000`
 * **Giao diện Quản trị viên (Admin Dashboard)**: `http://localhost:3001`
-* **CSDL PostgreSQL (Product Catalog)**: `http://localhost:5432` (User: `ecom_user`, Pass: `ecom_password`)
+
+### Hệ thống giám sát (Monitoring):
+* **Grafana (Giao diện biểu đồ metrics)**: **`http://localhost:3003`** (Tài khoản mặc định: `admin` / mật khẩu: `admin`)
+* **Prometheus (Cơ sở dữ liệu metrics)**: `http://localhost:9090`
+* **cAdvisor (Chỉ số tài nguyên container)**: `http://localhost:8083`
+* **Node Exporter (Chỉ số máy chủ OS)**: `http://localhost:9100`
+* **Nginx Exporter (Chỉ số Gateway)**: `http://localhost:9113`
+
+### Hệ thống quản lý Logs tập trung:
+* **Kibana (Giao diện tìm kiếm logs)**: **`http://localhost:5601`**
+* **Elasticsearch API (Lưu trữ logs)**: `http://localhost:9200`
+
+### Cơ sở dữ liệu & Services nền:
+* **CSDL PostgreSQL (Product Catalog)**: **`http://localhost:5433`** (User: `ecom_user`, Pass: `ecom_password`) *(Đổi từ 5432 sang 5433 để tránh trùng với Postgres trên Windows)*
 * **CSDL MySQL (Chứa các DB nghiệp vụ)**: `http://localhost:3307` (Root pass: `root_password`)
 * **CSDL Đồ thị Neo4j (AI Graph Browser)**: `http://localhost:7474` (User: `neo4j`, Pass: `password`)
 * **Neo4j Bolt Protocol (Kết nối Driver)**: `http://localhost:7687`
+* **Redis Broker (Celery Queue)**: `http://localhost:6379`
 
 ---
 
